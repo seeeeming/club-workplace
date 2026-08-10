@@ -1,0 +1,139 @@
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --border: #e8e9ec;
+  --primary: #4f6ef7;
+  --primary-weak: #eef1ff;
+  --text: #1f2430;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --radius: 14px;
+  --shadow: 0 2px 12px rgba(31, 36, 48, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: #e9eaee;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+input,
+textarea {
+  font-family: inherit;
+  outline: none;
+}
+
+a {
+  color: inherit;
+}
+
+/* ---------- 通用组件 ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  transition: transform 0.08s ease, opacity 0.2s ease;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.btn-ghost:active {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chip-experience {
+  background: var(--primary-weak);
+  color: var(--primary);
+}
+
+.chip-risk {
+  background: #fef3e2;
+  color: #b45309;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.empty {
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 14px;
+  padding: 32px 0;
+}
