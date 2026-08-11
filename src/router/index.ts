@@ -21,11 +21,17 @@ const routes = [
         component: () => import('../views/HandbookView.vue'),
       },
       {
+        // 旧的资料库路由：现由同学的全屏资料库承接（/archive）
         path: 'kb',
-        name: 'kb',
-        component: () => import('../views/KnowledgeBaseView.vue'),
+        redirect: '/archive',
       },
     ],
+  },
+  {
+    // 社团活动资料库（同学 React 应用全屏嵌入 public/archive）
+    path: '/archive',
+    name: 'archive',
+    component: () => import('../views/ArchiveView.vue'),
   },
   {
     // 全屏新建活动流程（独立于平台壳，占满整个窗口）

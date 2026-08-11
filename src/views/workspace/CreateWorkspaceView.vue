@@ -9,8 +9,8 @@ const { pending, startReflection, postpone } = useWorkspaceBridge()
 
 <template>
   <div class="create-fullscreen">
-    <!-- 同学工作台：占满整个窗口 -->
-    <iframe class="workspace-frame" src="/workspace.html" title="新建活动 · 社团工作台" />
+    <!-- 同学完整版工作台（AI+club create.html，含 AI 策划助手）：占满整个窗口 -->
+    <iframe class="workspace-frame" src="/ai/create.html" title="新建活动 · 社团工作台" />
 
     <!-- 浮动返回按钮（悬浮在 iframe 之上） -->
     <button class="floating-back" @click="router.push('/platform/workspace')">← 返回工作台</button>

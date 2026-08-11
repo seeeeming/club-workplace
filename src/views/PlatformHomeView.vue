@@ -14,9 +14,9 @@ const entries = [
   },
   {
     name: '社团资料库',
-    path: '/platform/kb',
+    path: '/archive',
     icon: '📚',
-    desc: '历届社长沉淀的经验与风险提醒，为未来的决策提供参考',
+    desc: '活动档案、资料检索、上传归档，以及历次复盘的 Reflection 沉淀',
   },
   {
     name: '社长手册',

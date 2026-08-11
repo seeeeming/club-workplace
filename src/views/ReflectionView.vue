@@ -149,7 +149,7 @@ function confirmSave() {
 }
 
 function goToKnowledgeBase() {
-  router.push('/platform/kb')
+  router.push('/archive')
 }
 
 function backHome() {
