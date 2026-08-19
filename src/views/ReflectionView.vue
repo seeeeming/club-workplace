@@ -78,7 +78,7 @@ function submitAnswer() {
     thinking.value = true
     setTimeout(() => {
       thinking.value = false
-      distilled.value = distillExperience(steps.value, answers.value, rating.value!)
+      distilled.value = distillExperience(steps.value, answers.value)
       phase.value = 'summary'
     }, 700)
   }

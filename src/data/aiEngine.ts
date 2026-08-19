@@ -24,7 +24,9 @@ export interface GuidedStep {
   /** 回答性质：activity 只进活动存档；experience 进知识库 */
   kind: 'activity' | 'experience'
   /** 进知识库后的条目类型（kind=experience 时有效） */
-  knowledgeType?: 'experience' | 'risk' | 'legacy'
+  knowledgeType?: KnowledgeType
+  /** 内容前缀（如「成功经验」「改进建议」「传承经验」） */
+  prefix?: string
 }
 
 /** 评分对应的开场白 */
@@ -33,7 +35,10 @@ export function openingLine(rating: ActivityRating): string {
   return '没关系，每一次活动都是经验。我们一起把这其中最有价值的部分留下来。'
 }
 
-/** 按评分返回 4 步引导问题（评分决定主次顺序） */
+/**
+ * 按评分返回 4 步引导问题（评分决定主次顺序与产出类型）：
+ *   高分：亮点→经验、改进→风险；低分：不足→教训、亮点→经验
+ */
 export function guidedSteps(rating: ActivityRating): GuidedStep[] {
   const good = rating >= 4
   return [
@@ -47,7 +52,8 @@ export function guidedSteps(rating: ActivityRating): GuidedStep[] {
       step: 2,
       label: good ? '做得好的' : '没达预期的',
       kind: 'experience',
-      knowledgeType: 'experience',
+      knowledgeType: good ? 'experience' : 'risk',
+      prefix: good ? '成功经验' : '经验教训',
       question: good
         ? '你觉得这次活动里，哪一部分做得特别好、值得以后照着做？'
         : '你觉得这次活动里，哪一部分没达到你的预期？',
@@ -56,7 +62,8 @@ export function guidedSteps(rating: ActivityRating): GuidedStep[] {
       step: 3,
       label: good ? '想改进的' : '做得好的',
       kind: 'experience',
-      knowledgeType: 'risk',
+      knowledgeType: good ? 'risk' : 'experience',
+      prefix: good ? '改进建议' : '成功经验',
       question: good
         ? '那如果重来一次，有没有哪一处你会换一种做法？'
         : '那有没有哪怕一点，你觉得做得还不错、可以保留下来的？',
@@ -65,7 +72,8 @@ export function guidedSteps(rating: ActivityRating): GuidedStep[] {
       step: 4,
       label: '传给下一任',
       kind: 'experience',
-      knowledgeType: 'legacy',
+      knowledgeType: 'experience',
+      prefix: '传承经验',
       question: '如果下一任社长要办一场类似的活动，你最想告诉他的「一句话」是什么？',
     },
   ]
@@ -79,7 +87,6 @@ export function guidedSteps(rating: ActivityRating): GuidedStep[] {
 export function distillExperience(
   steps: GuidedStep[],
   answers: string[],
-  rating: ActivityRating,
 ): Array<{ content: string; type: KnowledgeType }> {
   const items: Array<{ content: string; type: KnowledgeType }> = []
   for (let i = 0; i < steps.length; i++) {
@@ -87,24 +94,16 @@ export function distillExperience(
     if (step.kind !== 'experience') continue
     const text = (answers[i] ?? '').trim()
     if (!text) continue
-    items.push(buildItem(step, text, rating))
+    items.push(buildItem(step, text))
   }
   return items
 }
 
-/** 按步骤类型生成带前缀的知识条目 */
-function buildItem(
-  step: GuidedStep,
-  text: string,
-  rating: ActivityRating,
-): { content: string; type: KnowledgeType } {
-  switch (step.knowledgeType) {
-    case 'risk':
-      return { content: tidy(`改进建议：${text}`), type: 'risk' }
-    case 'legacy':
-      return { content: tidy(`传承经验：${text}`), type: 'experience' }
-    default:
-      return { content: tidy(`${rating >= 4 ? '成功经验' : '经验教训'}：${text}`), type: 'experience' }
+/** 按步骤生成带前缀的知识条目 */
+function buildItem(step: GuidedStep, text: string): { content: string; type: KnowledgeType } {
+  return {
+    content: tidy(`${step.prefix ?? ''}：${text}`),
+    type: step.knowledgeType ?? 'experience',
   }
 }
 
