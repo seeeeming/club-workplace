@@ -1,157 +1,125 @@
 import type { ActivityRating, KnowledgeItem, KnowledgeType, ReflectionQA } from '../types'
 
 /**
- * ============ Reflection 引导引擎（模拟 AI） ============
+ * ============ Reflection 引导引擎 ============
  *
- * 流程（按评分分支）：
- *   1. 先问「个人经历」—— 你做了什么、发生了什么
- *   2. AI 根据这段经历的**内容关键词**，自适应生成一条更相关的「经验追问」
- *   3. 只有「经验追问」的回答才会被提炼进知识库；个人经历只进活动记录
+ * 结构化 4 步引导复盘（按评分调整主次）：
+ *   1. 回到现场 —— 个人经历，进活动存档（不进知识库）
+ *   2. 主次一：高分问「做得好的」/ 低分问「没达预期的」（→ 成功经验 / 经验教训）
+ *   3. 主次二：高分问「想改进的」/ 低分找「做得好的」（→ 改进建议）
+ *   4. 传承精华 —— 一句话传给下一任社长（→ 传承经验）
  *
- * 接入真实大模型时，把下面两个函数替换成 AI 调用即可，输出契约保持不变。
+ * 接入真实大模型时，把 guidedSteps() 替换成 AI 生成问题、distillExperience()
+ * 替换成 AI 提炼即可，输出契约保持不变。
  */
+
+/** 引导步骤定义 */
+export interface GuidedStep {
+  /** 步骤序号（1-4） */
+  step: number
+  /** 步骤标签（对话里的小标题，如「回到现场」） */
+  label: string
+  /** 问题文案 */
+  question: string
+  /** 回答性质：activity 只进活动存档；experience 进知识库 */
+  kind: 'activity' | 'experience'
+  /** 进知识库后的条目类型（kind=experience 时有效） */
+  knowledgeType?: 'experience' | 'risk' | 'legacy'
+}
 
 /** 评分对应的开场白 */
 export function openingLine(rating: ActivityRating): string {
-  if (rating >= 4) return '很好！先来聊聊这次活动里，你做了些什么吧。'
-  return '没关系，每一次活动都是经验。先说说这次活动里，你做了些什么吧。'
+  if (rating >= 4) return '这次活动办得挺不错的！我们花几分钟，把值得记住的东西留下来。'
+  return '没关系，每一次活动都是经验。我们一起把这其中最有价值的部分留下来。'
 }
 
-/** 第一问：个人经历（永远先问这个） */
-export function firstActivityQuestion(rating: ActivityRating): string {
-  if (rating >= 4) return '这次活动从准备到结束，你具体做了哪些事情？'
-  return '这次活动从头到尾，发生了什么？你具体参与了哪些部分？'
-}
-
-/** 主题关键词库：把个人经历回答映射到相关追问 */
-interface FollowUpRule {
-  /** 关键词命中即触发 */
-  keys: string[]
-  /** 根据经历追问相关经验 */
-  question: string
-}
-
-const FOLLOW_UP_RULES: FollowUpRule[] = [
-  {
-    keys: ['招新', '宣传', '拉人', '推广', '摆摊', '海报', '公众号', '推文', '校园墙'],
-    question: '既然你提到了「宣传招募」——如果下一届要办类似活动，关于前期宣传和召集，你最想让他们知道什么经验？',
-  },
-  {
-    keys: ['预算', '钱', '经费', '报销', '超支', '花费', '采购', '物资', '物料'],
-    question: '你提到了「预算物资」——如果重新来一次，关于经费和物资准备，你最想提前做好什么？',
-  },
-  {
-    keys: ['场地', '教室', '会议室', '体育馆', '申请', '租借', '档期'],
-    question: '你提到了「场地安排」——下次办活动前，关于场地申请和现场布置，有什么经验可以告诉下一届？',
-  },
-  {
-    keys: ['分工', '队友', '成员', '干事', '志愿者', '负责人', '组员', '合作', '协调'],
-    question: '你提到了「团队分工」——这次你们怎么分工配合的？下次怎样才能让团队配合更顺畅？',
-  },
-  {
-    keys: ['时间', '迟到', '太赶', '来不及', '拖延', '计划', '排期', '流程'],
-    question: '你提到了「时间计划」——如果重新规划一次时间表，你最想提前安排什么？',
-  },
-  {
-    keys: ['观众', '参与', '到场', '人数', '体验', '反馈', '现场', '气氛', '互动'],
-    question: '你提到了「现场体验」——从参与者的角度，你觉得最值得保留或改进的地方是什么？',
-  },
-  {
-    keys: ['设备', '音响', '麦克风', '投影', '电脑', '机器', '坏了', '没电'],
-    question: '你提到了「设备」——设备方面有什么教训或经验，可以让下一届提前避坑？',
-  },
-  {
-    keys: ['出问题', '出错', '意外', '突发', '状况', '翻车', '失败', '混乱', '搞砸'],
-    question: '你提到了「意外状况」——当时是怎么应对的？下次可以提前做哪些准备避免同样的问题？',
-  },
-]
-
-/** 兜底追问：没命中任何主题时 */
-const FALLBACK_QUESTION =
-  '如果下一任社长也要办类似活动，你最希望他知道什么经验？'
-
-/**
- * 根据个人经历回答，自适应生成相关的经验追问（Step 2）
- */
-export function buildFollowUpQuestion(activityAnswer: string, rating: ActivityRating): string {
-  const text = activityAnswer.toLowerCase()
-  for (const rule of FOLLOW_UP_RULES) {
-    if (rule.keys.some((k) => text.includes(k))) {
-      return rule.question
-    }
-  }
-  // 低分场景给出更贴近复盘的语气
-  if (rating <= 3) {
-    return '如果重新办一次，你最想提前准备什么？'
-  }
-  return FALLBACK_QUESTION
-}
-
-/**
- * 构建完整的引导问答对列表。
- * 始终两轮：
- *   Q1（个人经历，activity）→ 用户答 → AI 据答生成 Q2（经验，experience）
- */
-export function buildQAs(rating: ActivityRating, activityAnswer: string, experienceAnswer: string): ReflectionQA[] {
+/** 按评分返回 4 步引导问题（评分决定主次顺序） */
+export function guidedSteps(rating: ActivityRating): GuidedStep[] {
+  const good = rating >= 4
   return [
-    { question: firstActivityQuestion(rating), answer: activityAnswer, kind: 'activity' },
-    { question: buildFollowUpQuestion(activityAnswer, rating), answer: experienceAnswer, kind: 'experience' },
+    {
+      step: 1,
+      label: '回到现场',
+      kind: 'activity',
+      question: '这次活动从开始到结束，有没有让你印象最深的一件事，或一个瞬间？',
+    },
+    {
+      step: 2,
+      label: good ? '做得好的' : '没达预期的',
+      kind: 'experience',
+      knowledgeType: 'experience',
+      question: good
+        ? '你觉得这次活动里，哪一部分做得特别好、值得以后照着做？'
+        : '你觉得这次活动里，哪一部分没达到你的预期？',
+    },
+    {
+      step: 3,
+      label: good ? '想改进的' : '做得好的',
+      kind: 'experience',
+      knowledgeType: 'risk',
+      question: good
+        ? '那如果重来一次，有没有哪一处你会换一种做法？'
+        : '那有没有哪怕一点，你觉得做得还不错、可以保留下来的？',
+    },
+    {
+      step: 4,
+      label: '传给下一任',
+      kind: 'experience',
+      knowledgeType: 'legacy',
+      question: '如果下一任社长要办一场类似的活动，你最想告诉他的「一句话」是什么？',
+    },
   ]
 }
 
 /**
- * 提炼「经验部分」的回答进知识库（Step 3）。
- * 设计原则：AI 不生成新内容，只梳理用户表达、提炼重点、分类信息。
- * 个人经历回答不进入知识库。
- * 注意：保留原文完整长度，不做截断——经验是给下一任社长看的，越真实越好。
+ * 把每步回答提炼成知识条目（Step 3 展示、确认后保存）。
+ * 只提炼 experience 部分；个人经历（第 1 步）只进活动存档，不进知识库。
+ * 类型由步骤决定，不再靠关键词猜测。
  */
 export function distillExperience(
-  qas: ReflectionQA[],
+  steps: GuidedStep[],
+  answers: string[],
   rating: ActivityRating,
 ): Array<{ content: string; type: KnowledgeType }> {
   const items: Array<{ content: string; type: KnowledgeType }> = []
-
-  for (const qa of qas) {
-    if (qa.kind !== 'experience') continue
-    const text = qa.answer.trim()
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i]
+    if (step.kind !== 'experience') continue
+    const text = (answers[i] ?? '').trim()
     if (!text) continue
-
-    const type: KnowledgeType = detectRisk(text)
-    const prefix = rating >= 4 ? '成功经验' : '经验教训'
-    // 保留完整原文（不再截断到 40 字）：经验是下一任社长要看的，尽量原汁原味
-    const content = tidy(`${prefix}：${text}`)
-    items.push({ content, type })
+    items.push(buildItem(step, text, rating))
   }
-
   return items
 }
 
-/** 简单判断这条内容是否属于风险提示 */
-function detectRisk(text: string): KnowledgeType {
-  const riskMarkers = [
-    '问题',
-    '风险',
-    '意外',
-    '不足',
-    '失败',
-    '困难',
-    '预算',
-    '超支',
-    '没准备',
-    '不够',
-    '迟到',
-    '缺人',
-    '下次要提前',
-    '如果重新',
-    '避坑',
-    '教训',
-  ]
-  return riskMarkers.some((m) => text.includes(m)) ? 'risk' : 'experience'
+/** 按步骤类型生成带前缀的知识条目 */
+function buildItem(
+  step: GuidedStep,
+  text: string,
+  rating: ActivityRating,
+): { content: string; type: KnowledgeType } {
+  switch (step.knowledgeType) {
+    case 'risk':
+      return { content: tidy(`改进建议：${text}`), type: 'risk' }
+    case 'legacy':
+      return { content: tidy(`传承经验：${text}`), type: 'experience' }
+    default:
+      return { content: tidy(`${rating >= 4 ? '成功经验' : '经验教训'}：${text}`), type: 'experience' }
+  }
 }
 
 /** 压缩空白、去首尾标点（仅做排版整理，不删内容） */
 function tidy(text: string): string {
   return text.replace(/\s+/g, ' ').replace(/^[\s，。；：、,.;:]/, '').replace(/[\s，。；：、,.;:]+$/, '').trim()
+}
+
+/** 组装引导问答对（供活动记录存档） */
+export function buildQAs(steps: GuidedStep[], answers: string[]): ReflectionQA[] {
+  return steps.map((s, i) => ({
+    question: s.question,
+    answer: answers[i] ?? '',
+    kind: s.kind,
+  }))
 }
 
 /** 原型演示用的示例知识库数据（首次进入时填充） */

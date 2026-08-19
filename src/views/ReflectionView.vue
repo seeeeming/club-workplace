@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useGrowthStore } from '../stores/growth'
-import { openingLine, firstActivityQuestion, buildFollowUpQuestion, distillExperience } from '../data/aiEngine'
+import { openingLine, guidedSteps, distillExperience, buildQAs } from '../data/aiEngine'
 import { getLevel } from '../data/growth'
 import type { ActivityRating, KnowledgeType } from '../types'
 import StarRating from '../components/StarRating.vue'
@@ -22,11 +22,11 @@ type Phase = 'celebration' | 'rating' | 'guided' | 'summary' | 'done'
 const phase = ref<Phase>(justCompleted ? 'celebration' : 'rating')
 const rating = ref<ActivityRating | null>(null)
 
-// Step 2 引导问答
-const currentStep = ref<'activity' | 'experience'>('activity')
-const activityAnswer = ref('')
-const experienceQuestion = ref('')
-const experienceAnswer = ref('')
+// Step 2 引导问答（结构化 4 步）
+const steps = computed(() => (rating.value ? guidedSteps(rating.value) : []))
+const stepIndex = ref(0)
+const answers = ref<string[]>([])
+const currentStep = computed(() => steps.value[stepIndex.value])
 const draft = ref('')
 const thinking = ref(false)
 
@@ -52,9 +52,9 @@ function postpone() {
 
 function goToGuided() {
   if (!rating.value) return
-  currentStep.value = 'activity'
-  activityAnswer.value = ''
-  experienceAnswer.value = ''
+  answers.value = []
+  stepIndex.value = 0
+  draft.value = ''
   phase.value = 'guided'
 }
 
@@ -63,53 +63,40 @@ function submitAnswer() {
   const text = draft.value.trim()
   if (!text) return
 
-  if (currentStep.value === 'activity') {
-    // 第一步：个人经历回答 → AI 根据内容生成相关经验追问
-    activityAnswer.value = text
-    draft.value = ''
+  answers.value[stepIndex.value] = text
+  draft.value = ''
+
+  if (stepIndex.value < steps.value.length - 1) {
+    // 还没到最后一问 → 推进到下一步
     thinking.value = true
     setTimeout(() => {
       thinking.value = false
-      experienceQuestion.value = buildFollowUpQuestion(text, rating.value!)
-      currentStep.value = 'experience'
-    }, 900)
+      stepIndex.value += 1
+    }, 700)
   } else {
-    // 第二步：经验回答 → AI 整理
-    experienceAnswer.value = text
-    draft.value = ''
+    // 最后一问答完 → 提炼 → 进入整理确认页
     thinking.value = true
     setTimeout(() => {
       thinking.value = false
-      const { qas } = collectQAs()
-      distilled.value = distillExperience(qas, rating.value!)
+      distilled.value = distillExperience(steps.value, answers.value, rating.value!)
       phase.value = 'summary'
-    }, 900)
+    }, 700)
   }
 }
 
-/** 汇总两次回答为 qas 列表 */
+/** 汇总 4 步问答为 qas 列表 */
 function collectQAs() {
-  return {
-    qas: [
-      { question: firstActivityQuestion(rating.value!), answer: activityAnswer.value, kind: 'activity' as const },
-      { question: experienceQuestion.value, answer: experienceAnswer.value, kind: 'experience' as const },
-    ],
-  }
+  return { qas: buildQAs(steps.value, answers.value) }
 }
 
-/** 展示「已答内容 + AI 追问」的对话流 */
+/** 展示「已答内容 + 引导问题」的对话流 */
 const chatLog = computed(() => {
   const log: Array<{ from: 'ai' | 'user'; text: string }> = []
-  log.push({
-    from: 'ai',
-    text: `${openingLine(rating.value!)}\n\n${firstActivityQuestion(rating.value!)}`,
-  })
-  if (activityAnswer.value) {
-    log.push({ from: 'user', text: activityAnswer.value })
-    if (experienceQuestion.value) {
-      log.push({ from: 'ai', text: experienceQuestion.value })
-      if (experienceAnswer.value) log.push({ from: 'user', text: experienceAnswer.value })
-    }
+  const s = steps.value
+  log.push({ from: 'ai', text: `${openingLine(rating.value!)}\n\n${s[0]?.question ?? ''}` })
+  for (let i = 0; i < stepIndex.value; i++) {
+    log.push({ from: 'user', text: answers.value[i] ?? '' })
+    if (s[i + 1]) log.push({ from: 'ai', text: s[i + 1].question })
   }
   return log
 })
@@ -220,7 +207,7 @@ function viewProfile() {
             <div v-if="thinking" class="chat-row ai-row">
               <AiBubble>
                 <span class="thinking-dots"><i></i><i></i><i></i></span>
-                {{ currentStep === 'experience' ? '正在根据你的经历整理追问…' : '正在整理你的表达…' }}
+                {{ stepIndex >= steps.length - 1 ? '正在整理你的经验…' : '正在准备下一个问题…' }}
               </AiBubble>
             </div>
           </div>
@@ -228,7 +215,7 @@ function viewProfile() {
           <div v-if="!thinking" class="input-area">
             <div class="input-head">
               <span class="input-tip">
-                {{ currentStep === 'activity' ? 'Q1 个人经历' : 'Q2 经验总结' }}
+                Q{{ stepIndex + 1 }} {{ currentStep?.label ?? '' }}
               </span>
               <span class="input-hint">回车发送</span>
             </div>
@@ -236,7 +223,7 @@ function viewProfile() {
               v-model="draft"
               class="answer-input"
               rows="2"
-              :placeholder="currentStep === 'activity' ? firstActivityQuestion(rating!) : experienceQuestion"
+              :placeholder="currentStep?.question ?? ''"
               @keydown.enter.exact.prevent="submitAnswer"
             />
             <div class="input-actions">
