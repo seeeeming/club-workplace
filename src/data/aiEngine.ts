@@ -103,6 +103,7 @@ export function buildQAs(rating: ActivityRating, activityAnswer: string, experie
  * 提炼「经验部分」的回答进知识库（Step 3）。
  * 设计原则：AI 不生成新内容，只梳理用户表达、提炼重点、分类信息。
  * 个人经历回答不进入知识库。
+ * 注意：保留原文完整长度，不做截断——经验是给下一任社长看的，越真实越好。
  */
 export function distillExperience(
   qas: ReflectionQA[],
@@ -117,7 +118,8 @@ export function distillExperience(
 
     const type: KnowledgeType = detectRisk(text)
     const prefix = rating >= 4 ? '成功经验' : '经验教训'
-    const content = tidy(`${prefix}：${shorten(text)}`)
+    // 保留完整原文（不再截断到 40 字）：经验是下一任社长要看的，尽量原汁原味
+    const content = tidy(`${prefix}：${text}`)
     items.push({ content, type })
   }
 
@@ -147,15 +149,9 @@ function detectRisk(text: string): KnowledgeType {
   return riskMarkers.some((m) => text.includes(m)) ? 'risk' : 'experience'
 }
 
-/** 压缩空白、去首尾标点 */
+/** 压缩空白、去首尾标点（仅做排版整理，不删内容） */
 function tidy(text: string): string {
   return text.replace(/\s+/g, ' ').replace(/^[\s，。；：、,.;:]/, '').replace(/[\s，。；：、,.;:]+$/, '').trim()
-}
-
-/** 截断到合理长度 */
-function shorten(text: string, max = 40): string {
-  const t = text.replace(/\s+/g, ' ')
-  return t.length > max ? t.slice(0, max) + '…' : t
 }
 
 /** 原型演示用的示例知识库数据（首次进入时填充） */

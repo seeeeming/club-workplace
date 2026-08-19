@@ -267,7 +267,7 @@ function viewProfile() {
             <textarea
               :value="item.content"
               class="item-textarea"
-              rows="2"
+              rows="5"
               @input="updateItem(i, { content: ($event.target as HTMLTextAreaElement).value })"
             />
           </div>
