@@ -130,7 +130,11 @@ function fmtDate(iso: string): string {
         <div class="dialog card">
           <div class="dialog-icon">🎉</div>
           <h2 class="dialog-title">恭喜完成本次活动！</h2>
-          <p class="dialog-sub">「{{ pending.title }}」已记录，获得「活动完成」徽章</p>
+          <p class="dialog-sub">
+            「{{ pending.title }}」已记录
+            <template v-if="pending.level">，解锁称号 <b>{{ pending.level.emoji }} {{ pending.level.name }}</b></template>
+            <template v-else>，获得「活动完成」徽章</template>
+          </p>
           <p class="dialog-hint">做一次轻量复盘，把经验沉淀下来？</p>
           <div class="dialog-actions">
             <button class="btn btn-primary btn-block" @click="startReflection">立即开始</button>

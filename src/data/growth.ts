@@ -46,3 +46,50 @@ export function getLevel(count: number): GrowthLevel | null {
 export function getNextLevel(count: number): GrowthLevel | null {
   return GROWTH_LEVELS.find((l) => count < l.count) ?? null
 }
+
+/** 活动称号表（按完成活动次数解锁） */
+export const ACTIVITY_LEVELS: GrowthLevel[] = [
+  {
+    count: 1,
+    emoji: '🏅',
+    name: '活动初心者',
+    en: 'Newcomer',
+    message: '完成了第一场活动！\n从策划到落地，你已经迈出了第一步。',
+  },
+  {
+    count: 3,
+    emoji: '🎖️',
+    name: '活动组织者',
+    en: 'Organizer',
+    message: '已经办过 3 场活动了。\n你的组织能力正在被大家看到。',
+  },
+  {
+    count: 7,
+    emoji: '🏆',
+    name: '活动达人',
+    en: 'Master',
+    message: '7 场活动的经验，\n让社团的每一次精彩都有你的底气。',
+  },
+  {
+    count: 10,
+    emoji: '👑',
+    name: '活动传奇',
+    en: 'Legend',
+    message: '10 场活动！\n你是社团的中流砥柱。',
+  },
+] as const
+
+/** 根据完成活动次数返回当前称号（未达 1 场时返回 null） */
+export function getActivityLevel(count: number): GrowthLevel | null {
+  let current: GrowthLevel | null = null
+  for (const level of ACTIVITY_LEVELS) {
+    if (count >= level.count) current = level
+    else break
+  }
+  return current
+}
+
+/** 返回下一个活动称号（用于进度提示），已满级返回 null */
+export function getNextActivityLevel(count: number): GrowthLevel | null {
+  return ACTIVITY_LEVELS.find((l) => count < l.count) ?? null
+}

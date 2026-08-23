@@ -1,6 +1,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGrowthStore } from '../stores/growth'
+import { getActivityLevel } from '../data/growth'
 
 /**
  * 同学工作台（public/ai/create.html，通过 iframe 嵌入）与父窗口之间的桥接。
@@ -19,7 +20,8 @@ export function useWorkspaceBridge() {
   const store = useGrowthStore()
 
   // 完成活动后待处理的记录（用于「要不要复盘」弹窗）
-  const pending = ref<{ id: string; title: string } | null>(null)
+  // level：完成本场活动后解锁的活动称号（未达门槛时为 null，比如从 0 到 1）
+  const pending = ref<{ id: string; title: string; level: ReturnType<typeof getActivityLevel> } | null>(null)
 
   function onMessage(e: MessageEvent<WorkspaceMessage>) {
     const data = e.data
@@ -32,7 +34,11 @@ export function useWorkspaceBridge() {
     if (data.type === 'activity-completed') {
       // 活动完成：记录到 store（照片必传，由工作台保证）
       const activity = store.completeActivity(data.title?.trim() || '未命名活动', data.photo)
-      pending.value = { id: activity.id, title: activity.title }
+      pending.value = {
+        id: activity.id,
+        title: activity.title,
+        level: getActivityLevel(store.stats.completedActivities),
+      }
     } else if (data.type === 'open-reflection') {
       // 主动进入复盘：找最近一个未复盘的活动
       const unreflected = store.activities.find((a) => !a.reflected)

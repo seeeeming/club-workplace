@@ -9,7 +9,7 @@ import type {
   Reflection,
   ReflectionQA,
 } from '../types'
-import { getLevel, getNextLevel } from '../data/growth'
+import { getActivityLevel, getLevel, getNextActivityLevel, getNextLevel } from '../data/growth'
 import { seedKnowledge } from '../data/aiEngine'
 
 const STORAGE_KEY = 'club-reflection-store-v1'
@@ -96,6 +96,8 @@ export const useGrowthStore = defineStore('growth', () => {
 
   const currentLevel = computed(() => getLevel(stats.value.reflections))
   const nextLevel = computed(() => getNextLevel(stats.value.reflections))
+  const activityLevel = computed(() => getActivityLevel(stats.value.completedActivities))
+  const nextActivityLevel = computed(() => getNextActivityLevel(stats.value.completedActivities))
 
   // ---------- 登录 ----------
   function login(name: string) {
@@ -222,6 +224,8 @@ export const useGrowthStore = defineStore('growth', () => {
     isLoggedIn,
     currentLevel,
     nextLevel,
+    activityLevel,
+    nextActivityLevel,
     demoReflections: computed(() => state.value.demoReflections),
     login,
     logout,
