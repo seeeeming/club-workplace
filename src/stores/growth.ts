@@ -127,6 +127,32 @@ export const useGrowthStore = defineStore('growth', () => {
     return state.value.activities.find((a) => a.id === id)
   }
 
+  /** 删除活动：连同其复盘记录与沉淀的知识条目一起移除，并回退统计 */
+  function deleteActivity(id: string) {
+    const idx = state.value.activities.findIndex((a) => a.id === id)
+    if (idx === -1) return
+
+    const related = state.value.reflections.filter((r) => r.activityId === id)
+    const knowledgeIds = new Set(related.flatMap((r) => r.knowledgeIds))
+    const removedExperiences = state.value.knowledge.filter(
+      (k) => knowledgeIds.has(k.id) && k.type === 'experience',
+    ).length
+    const removedRisks = state.value.knowledge.filter(
+      (k) => knowledgeIds.has(k.id) && k.type === 'risk',
+    ).length
+
+    state.value.activities.splice(idx, 1)
+    state.value.reflections = state.value.reflections.filter((r) => r.activityId !== id)
+    state.value.knowledge = state.value.knowledge.filter((k) => !knowledgeIds.has(k.id))
+
+    state.value.stats.completedActivities = Math.max(0, state.value.stats.completedActivities - 1)
+    state.value.stats.reflections = Math.max(0, state.value.stats.reflections - related.length)
+    state.value.stats.experiences = Math.max(0, state.value.stats.experiences - removedExperiences)
+    state.value.stats.risks = Math.max(0, state.value.stats.risks - removedRisks)
+
+    persist()
+  }
+
   // ---------- Reflection ----------
   function saveReflection(params: {
     activityId: string
@@ -201,6 +227,7 @@ export const useGrowthStore = defineStore('growth', () => {
     logout,
     completeActivity,
     getActivity,
+    deleteActivity,
     saveReflection,
     setDemoReflections,
     resetAll,

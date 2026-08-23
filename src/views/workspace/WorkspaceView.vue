@@ -2,6 +2,7 @@
 import { useRouter } from 'vue-router'
 import { useGrowthStore } from '../../stores/growth'
 import { useWorkspaceBridge } from '../../composables/useWorkspaceBridge'
+import DeleteActivityButton from '../../components/DeleteActivityButton.vue'
 
 const router = useRouter()
 const store = useGrowthStore()
@@ -52,6 +53,7 @@ function fmtDate(iso: string): string {
             </button>
           </template>
         </div>
+        <DeleteActivityButton :activity="activity" />
       </div>
     </div>
 
@@ -113,6 +115,7 @@ function fmtDate(iso: string): string {
 }
 
 .activity-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 16px;

@@ -185,6 +185,19 @@
             opacity: 0.6;
         }
 
+        .step-nav-item.locked {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .step-nav-item.locked:hover {
+            background: transparent;
+        }
+
+        .step-nav-item.locked .step-dot {
+            border-style: dashed;
+        }
+
         .step-dot {
             width: 28px; height: 28px;
             min-width: 28px;
@@ -374,6 +387,12 @@
             border-radius: 10px;
         }
 
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: 13px;
+            border-radius: 6px;
+        }
+
         .btn-group {
             display: flex;
             gap: 10px;
@@ -501,6 +520,75 @@
             border-radius: 6px;
             font-size: 13px;
             text-align: right;
+        }
+
+        /* ── Upload ── */
+        .upload-dropzone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 36px 20px;
+            text-align: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .upload-dropzone:hover,
+        .upload-dropzone.dragover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .upload-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .upload-item {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            background: #fafbfc;
+        }
+
+        .upload-item img {
+            width: 100%;
+            height: 110px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .upload-item-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 10px;
+        }
+
+        .upload-item-name {
+            flex: 1;
+            font-size: 12px;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .upload-item-remove {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .upload-item-remove:hover {
+            color: var(--danger);
+            background: #fef2f2;
         }
 
         /* ── Progress ── */
@@ -1011,7 +1099,7 @@
     <header class="header">
         <a href="index.html" class="back-btn" title="返回活动列表">←</a>
         <h1 id="headerTitle" onclick="editTitleInline()" style="cursor:pointer;" title="点击编辑活动名称">未命名活动</h1>
-        <span class="step-indicator">步骤 <strong id="currentStepNum">1</strong> / 8</span>
+        <span class="step-indicator">步骤 <strong id="currentStepNum">1</strong> / 6</span>
         <button class="btn btn-outline btn-sm" onclick="saveDraft()" title="保存当前进度">💾 保存草稿</button>
     </header>
 
@@ -1024,7 +1112,7 @@
                 <div class="timeline-progress-bar">
                     <div class="timeline-progress-fill" id="globalProgress" style="width:0%"></div>
                 </div>
-                <span class="timeline-progress-text" id="progressText">0 / 8</span>
+                <span class="timeline-progress-text" id="progressText">0 / 6</span>
             </div>
             <nav class="step-nav" id="stepNav"></nav>
             <div class="sidebar-divider"></div>
@@ -1092,9 +1180,9 @@
             },
             {
                 num: 5,
-                title: "活动进度跟踪",
-                hint: "监控各项进展",
-                icon: "📊",
+                title: "活动资料上传",
+                hint: "上传活动图片资料",
+                icon: "📷",
                 render() { return renderStep5(); }
             },
             {
@@ -1103,20 +1191,6 @@
                 hint: "标记完成状态",
                 icon: "✅",
                 render() { return renderStep6(); }
-            },
-            {
-                num: 7,
-                title: "归档资料库",
-                hint: "文档打包归档",
-                icon: "📁",
-                render() { return renderStep7(); }
-            },
-            {
-                num: 8,
-                title: "获得完成徽章",
-                hint: "活动闭环",
-                icon: "🏆",
-                render() { return renderStep8(); }
             }
         ];
 
@@ -1129,37 +1203,65 @@
             aiPlan: "",
             planContent: "",
             planSections: {
-                overview: "",
-                planOverview: {
-                    theme: "",
-                    objective: "",
-                    dateYear: "",
-                    dateMonth: "",
-                    dateDay: "",
-                    targetAudience: "",
-                    countPerSession: "",
-                    sessions: ""
-                },
-                purpose: "",
-                contentFlow: "",
-                requirements: "",
-                execution: "",
-                riskPlan: ""
+                // 一、活动名称（见 activityData.name，与页首标题同步）
+                // 二、主题
+                theme: "",
+                slogan: "",
+                // 三、目的
+                objective: "",
+                // 四、基本信息
+                dateTime: "",
+                backupDate: "",
+                location: "",
+                needVenueBooking: "否",
+                venueBookings: [],
+                partner: "",
+                targetAudience: "",
+                // 五、预计参与人数
+                targetCount: "",
+                maxCount: "",
+                composition: "",
+                // 六、活动执行方案
+                executionPlan: [],
+                // 七、基础物资需求（可选 — 大型活动需社联/学校支持）
+                basicMaterials: [],
+                // 八、执行方案 — 人员与时间节点（可选）
+                procurementTime: "",
+                procurementPerson: "",
+                procurementStandard: "",
+                onSiteManager: "",
+                // 八、执行方案 — 物资归还
+                returnPlan: "",
+                returnPerson: "",
+                returnPhone: "",
+                returnWechat: "",
+                // 财务 & 复盘
+                financePlan: "",
+                reviewPlan: "",
+                // 九、应急预案
+                emergencyPlan: [],
+                // 十、宣传方式（可选）
+                publicityPre: "",
+                publicityPost: ""
             },
+            // ── 经费申请表（第二步）──
+            organizationName: "",
+            activityLeader: "",
+            financePerson: "",
+            approvalDate: "",
+            approvalOpinion: "",
+            approvalActivityLeader: "",
             budget: [
-                { item: "场地租赁", cost: 0 },
-                { item: "设备搭建", cost: 0 },
-                { item: "人员费用", cost: 0 },
-                { item: "宣传推广", cost: 0 },
-                { item: "物资采购", cost: 0 },
-                { item: "应急储备", cost: 0 }
+                { name: "", unitPrice: "", unit: "", quantity: "", reusable: "否", purpose: "", purchaseLink: "" }
             ],
             approved: false,
+            purchaseList: [],
             checklist: [],
-            progress: {},
-            reflection: "",
             archived: false,
             badgeEarned: false,
+            uploads: [],
+            progress: {},
+            reflection: "",
             aiAssistant: {
                 floatVisible: true,
                 miniOpen: false,
@@ -1183,15 +1285,17 @@
             const nav = document.getElementById("stepNav");
             nav.innerHTML = steps.map((s, i) => {
                 let cls = "";
+                let lock = false;
                 if (completedSteps.has(i)) cls = "completed";
                 else if (i === currentStep) cls = "active";
+                else if (!canAccessStep(i)) { cls = "locked"; lock = true; }
                 else cls = "future";
                 return `
                 <div class="step-nav-item ${cls}" onclick="goToStep(${i})">
-                    <span class="step-dot">${completedSteps.has(i) ? '✓' : s.num}</span>
+                    <span class="step-dot">${completedSteps.has(i) ? '✓' : (lock ? '🔒' : s.num)}</span>
                     <span class="step-info">
                         <span class="step-title">${s.icon} ${s.title}</span>
-                        <span class="step-hint">${s.hint}</span>
+                        <span class="step-hint">${lock ? lockedReason(i) : s.hint}</span>
                     </span>
                     ${completedSteps.has(i) ? '<span class="step-check" style="color:var(--success)">✓</span>' : ''}
                 </div>`;
@@ -1206,34 +1310,52 @@
 
         // ── Step validation ──
         function isStepValid(index) {
-            const po = activityData.planSections.planOverview;
             const p = activityData.planSections;
             switch (index) {
-                case 0: // 输出策划案
-                    return !!(po.theme.trim() && po.objective.trim() && po.dateYear.trim() &&
-                        po.dateMonth.trim() && po.dateDay.trim() && po.targetAudience.trim() &&
-                        po.countPerSession.trim() && po.sessions.trim() &&
-                        p.purpose.trim() && p.contentFlow.trim() && p.requirements.trim() &&
-                        p.execution.trim() && p.riskPlan.trim());
-                case 1: // 编制预算案
-                    return activityData.budget.some(b => Number(b.cost) > 0);
-                case 2: // 审批流程
-                    return activityData.approved;
-                case 3: // 采购Checklist
-                    return activityData.checklist.length > 0 && activityData.checklist.every(c => c.done);
-                case 4: // 活动进度跟踪
-                    return activityData.progressItems && activityData.progressItems.length > 0;
+                case 0: // 输出策划案 — 必填：活动名称、主题、目的、时间、地点、目标人数、执行方案、应急预案
+                    return !!(activityData.name && activityData.name.trim() &&
+                        p.theme && p.theme.trim() &&
+                        p.objective && p.objective.trim() &&
+                        p.dateTime && p.dateTime.trim() &&
+                        p.location && p.location.trim() &&
+                        p.targetCount && p.targetCount.trim() &&
+                        p.executionPlan && p.executionPlan.length > 0 && p.executionPlan.some(r => (r.time || "").trim() || (r.name || "").trim()) &&
+                        p.emergencyPlan && p.emergencyPlan.length > 0 && p.emergencyPlan.some(r => (r.response || "").trim()));
+                case 1: // 编制预算案 — 必填：组织名称、活动负责人 + 至少一项有效预算明细
+                    return !!((activityData.organizationName || "").trim() &&
+                        (activityData.activityLeader || "").trim() &&
+                        activityData.budget.length > 0 &&
+                        activityData.budget.some(b => (b.name || "").trim() && (parseFloat(b.unitPrice) || 0) > 0));
+                case 2: // 审批流程或导出文件 — 导出文件后即完成
+                    return true;
+                case 3: // 采购清单 — 至少一项物品名称已填写
+                    return activityData.purchaseList && activityData.purchaseList.length > 0
+                        && activityData.purchaseList.some(r => (r.name || "").trim());
+                case 4: // 活动资料上传
+                    return activityData.uploads && activityData.uploads.length > 0;
                 case 5: // 活动完成
                     return true; // controlled by checkbox in UI
-                case 6: // 归档资料库
-                    return activityData.archivedItems && activityData.archivedItems.length > 0;
-                case 7: // 获得完成徽章
-                    return true;
                 default: return false;
             }
         }
 
+        function canAccessStep(index) {
+            if (index <= 1) return true;
+            return completedSteps.has(0) && completedSteps.has(1) && completedSteps.has(index - 1);
+        }
+
+        function lockedReason(index) {
+            if (!completedSteps.has(0) || !completedSteps.has(1)) {
+                return "先确认「输出策划案」和「编制预算案」";
+            }
+            return `先确认上一步「${steps[index - 1].title}」`;
+        }
+
         function goToStep(index) {
+            if (!canAccessStep(index)) {
+                showToast("🔒 " + lockedReason(index));
+                return;
+            }
             currentStep = index;
             renderAll();
             document.getElementById("mainContent").scrollTop = 0;
@@ -1321,34 +1443,28 @@
                 return;
             }
             completedSteps.add(index);
-            if (index === steps.length - 1) {
-                activityData.badgeEarned = true;
-            }
             // 活动完成（第 6 步）→ 通知父窗口（Vue 平台）记录活动并询问是否复盘
             if (index === 5 && window.parent) {
                 window.parent.postMessage({
                     type: 'activity-completed',
                     title: activityData.name,
-                    photo: activityData.photo || ''
+                    photo: (activityData.uploads && activityData.uploads.length) ? activityData.uploads[0].dataUrl : ''
                 }, '*');
             }
             saveActivityData();
-            renderAll();
             if (index < steps.length - 1) {
-                showToast(`✅ 「${steps[index].title}」已完成，进入下一步`);
+                const next = index + 1;
+                if (canAccessStep(next)) {
+                    showToast(`✅ 「${steps[index].title}」已完成，进入下一步`);
+                    currentStep = next;
+                } else {
+                    showToast(`✅ 「${steps[index].title}」已完成。${lockedReason(next)}`);
+                }
             } else {
                 showToast("🎉 全部流程已完成！活动完美闭环！");
             }
+            renderAll();
             document.getElementById("mainContent").scrollTop = 0;
-        }
-
-        function nextStep() {
-            completeStep(currentStep);
-            if (currentStep < steps.length - 1) {
-                currentStep++;
-                renderAll();
-                document.getElementById("mainContent").scrollTop = 0;
-            }
         }
 
         function prevStep() {
@@ -1422,166 +1538,496 @@
             t._timeout = setTimeout(() => { t.style.display = "none"; }, 2500);
         }
 
-        // ── Overview form helpers ──
-        function overviewField(field) {
-            return activityData.planSections.planOverview[field] || "";
-        }
-
-        function renderOverviewRow(label, field, placeholder, value, readonly) {
-            return `
-            <div style="display:flex;align-items:center;gap:12px;">
-                <span style="width:80px;flex-shrink:0;font-size:13px;font-weight:500;color:var(--text-secondary);text-align:right;">${label}</span>
-                <input class="input" style="flex:1;" placeholder="${placeholder}"
-                       value="${esc(value || '')}"
-                       ${readonly ? 'disabled' : ''}
-                       oninput="activityData.planSections.planOverview.${field}=this.value">
-            </div>`;
-        }
-
-        function renderOverviewRow_date() {
-            const po = activityData.planSections.planOverview;
-            return `
-            <div style="display:flex;align-items:center;gap:12px;">
-                <span style="width:80px;flex-shrink:0;font-size:13px;font-weight:500;color:var(--text-secondary);text-align:right;">活动时间</span>
-                <input class="input" style="width:72px;text-align:center;" placeholder="年"
-                       value="${esc(po.dateYear)}" oninput="activityData.planSections.planOverview.dateYear=this.value">
-                <span style="font-size:13px;color:var(--text-secondary);">年</span>
-                <input class="input" style="width:56px;text-align:center;" placeholder="月"
-                       value="${esc(po.dateMonth)}" oninput="activityData.planSections.planOverview.dateMonth=this.value">
-                <span style="font-size:13px;color:var(--text-secondary);">月</span>
-                <input class="input" style="width:56px;text-align:center;" placeholder="日"
-                       value="${esc(po.dateDay)}" oninput="activityData.planSections.planOverview.dateDay=this.value">
-                <span style="font-size:13px;color:var(--text-secondary);">日</span>
-            </div>`;
-        }
-
-        function renderOverviewRow_count() {
-            const po = activityData.planSections.planOverview;
-            const per = Number(po.countPerSession) || 0;
-            const ses = Number(po.sessions) || 0;
-            const total = per * ses;
-            return `
-            <div style="display:flex;align-items:center;gap:12px;">
-                <span style="width:80px;flex-shrink:0;font-size:13px;font-weight:500;color:var(--text-secondary);text-align:right;">预计人数</span>
-                <input class="input" style="width:80px;text-align:center;" placeholder="人数"
-                       value="${esc(po.countPerSession)}" oninput="activityData.planSections.planOverview.countPerSession=this.value">
-                <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">人/场，共</span>
-                <input class="input" style="width:64px;text-align:center;" placeholder="场次"
-                       value="${esc(po.sessions)}" oninput="activityData.planSections.planOverview.sessions=this.value">
-                <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">场</span>
-                ${total > 0 ? `<span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">（总计 <strong style="color:var(--primary);">${total}</strong> 人）</span>` : ''}
-            </div>`;
-        }
-
         // ═══════════════════════════════════════════════
         // STEP 1: 输出策划案
         // ═══════════════════════════════════════════════
         function renderStep1() {
             const done = completedSteps.has(0);
             const p = activityData.planSections;
+
+            // ── Lazy init defaults for empty arrays ──
+            if (!p.executionPlan || p.executionPlan.length === 0) {
+                p.executionPlan = [
+                    { time: "", name: "", format: "", description: "" },
+                    { time: "", name: "", format: "", description: "" }
+                ];
+            }
+            if (!p.basicMaterials || p.basicMaterials.length === 0) {
+                p.basicMaterials = [
+                    { type: "桌椅", needs: "桌子", quantity: "1", unit: "张", requirements: "" },
+                    { type: "电力设备", needs: "插排/接线板", quantity: "", unit: "个", requirements: "" },
+                    { type: "其他设备", needs: "白板/投影仪/音响", quantity: "", unit: "套", requirements: "" },
+                    { type: "场地支持", needs: "清洁工具/垃圾袋", quantity: "", unit: "套", requirements: "" }
+                ];
+            }
+            if (!p.venueBookings || p.venueBookings.length === 0) {
+                p.venueBookings = [
+                    { orgName: "", activityName: "", bookingDate: "", timeSlot: "", venue: "", headcount: "", dept: "", floorPlan: "", email: "" }
+                ];
+            }
+            if (!p.emergencyPlan || p.emergencyPlan.length === 0) {
+                p.emergencyPlan = [
+                    { risk: "天气突变（户外活动）", response: "", person: "" },
+                    { risk: "设备故障", response: "", person: "" },
+                    { risk: "人员缺席", response: "", person: "" },
+                    { risk: "安全问题", response: "", person: "" },
+                    { risk: "参与度不足", response: "", person: "" }
+                ];
+            }
+
+            // ── 应急预案示例（按风险类型作为占位提示，不填入内容）──
+            const emergencyExamples = {
+                "天气突变（户外活动）": "提前准备雨棚/转至室内备用场地",
+                "设备故障": "备用投影仪/手动扩音器/技术支援电话",
+                "人员缺席": "机动人员顶岗/简化非核心环节",
+                "安全问题": "现场急救包",
+                "参与度不足": "临时增加抽奖"
+            };
+
+            // ── Progress indicators ──
+            const hasExecPlan = p.executionPlan.some(r => (r.time || "").trim() || (r.name || "").trim());
+            const hasEmergency = p.emergencyPlan.some(r => (r.response || "").trim());
+            const filledRequired = [activityData.name, p.theme, p.objective, p.dateTime, p.location, p.targetCount].filter(v => v && v.trim()).length;
+
+            // ── Format helpers for table inputs ──
+            const escQ = (v) => esc(v || "");
+
             return `
             <h2>📝 输出策划案</h2>
-            <p class="subtitle">在 AI 策划思路基础上，按以下六个部分完善活动策划方案。</p>
+            <p class="subtitle">按照以下十个部分完善活动策划方案。标记 <span style="background:#fff7ed;color:#d97706;padding:1px 8px;border-radius:10px;font-size:11px;">可选</span> 的为选填项，可留空。</p>
 
+            <!-- ═══ 一、活动名称 ═══ -->
             <div class="section-card">
-                <label>活动名称</label>
-                <input class="input" value="${esc(activityData.name)}" disabled>
-            </div>
-
-            <div class="section-card">
-                <h3>一、活动概述（基础信息）</h3>
+                <h3>一、活动名称 <span style="color:var(--danger);">*</span></h3>
                 <div style="display:flex;flex-direction:column;gap:14px;">
-                    ${renderOverviewRow("活动主题", "theme", "例：2026 秋季音乐嘉年华", p.planOverview.theme)}
-                    ${renderOverviewRow("活动名称", "name", "与上方主题保持一致或细化", activityData.name, true)}
-                    ${renderOverviewRow("活动目标", "objective", "例：提升品牌认知、促进社群互动、招募新会员", p.planOverview.objective)}
-                    ${renderOverviewRow_date()}
-                    ${renderOverviewRow("服务对象", "targetAudience", "例：18-35岁城市青年 / 3-12岁亲子家庭 / 企业HR从业者", p.planOverview.targetAudience)}
-                    ${renderOverviewRow_count()}
+                    <div>
+                        <label>活动名称 <span style="color:var(--danger);">*</span></label>
+                        <input class="input" placeholder="填写活动正式名称"
+                               value="${escQ(activityData.name)}"
+                               oninput="activityData.name=this.value;updateHeaderTitle();">
+                    </div>
                 </div>
             </div>
 
+            <!-- ═══ 二、主题 ═══ -->
             <div class="section-card">
-                <h3>二、活动目的 / 意义</h3>
-                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
-                    为什么要举办这个活动？希望达成什么目标？对参与者/组织方有什么价值？
-                </p>
-                <textarea class="textarea" placeholder="例：1. 提升品牌在年轻群体中的认知度；2. 促进社区成员间的交流与连接；3. ..."
-                          oninput="activityData.planSections.purpose=this.value"
-                          style="min-height:90px;">${esc(p.purpose)}</textarea>
+                <h3>二、主题</h3>
+                <div style="display:flex;flex-direction:column;gap:14px;">
+                    <div>
+                        <label>核心主题 <span style="color:var(--danger);">*</span></label>
+                        <input class="input" placeholder="用一句话凝练活动主题，需具有吸引力且契合目的"
+                               value="${escQ(p.theme)}"
+                               oninput="activityData.planSections.theme=this.value">
+                    </div>
+                    <div>
+                        <label>副标题 / Slogan <span style="background:#fff7ed;color:#d97706;padding:1px 8px;border-radius:10px;font-size:11px;">可选</span></label>
+                        <input class="input" placeholder="辅助说明主题的短句或口号"
+                               value="${escQ(p.slogan)}"
+                               oninput="activityData.planSections.slogan=this.value">
+                    </div>
+                </div>
             </div>
 
+            <!-- ═══ 三、目的 ═══ -->
             <div class="section-card">
-                <h3>三、活动内容与流程</h3>
-                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
-                    活动具体内容包括哪些环节？整体流程如何安排？各环节时长多少？
-                </p>
-                <textarea class="textarea" placeholder="例：
-【暖场环节】30min — 签到、拍照打卡、自由交流
-【开场致辞】15min — 主办方代表致欢迎辞
-【核心环节】90min — xxx
-【互动环节】30min — xxx
-【收尾总结】15min — 总结 + 合影"
-                          oninput="activityData.planSections.contentFlow=this.value"
-                          style="min-height:120px;">${esc(p.contentFlow)}</textarea>
+                <h3>三、目的</h3>
+                <label>核心目标 <span style="color:var(--danger);">*</span></label>
+                <textarea class="textarea" placeholder="明确本次活动希望达成的主要效果"
+                          oninput="activityData.planSections.objective=this.value"
+                          style="min-height:90px;">${escQ(p.objective)}</textarea>
             </div>
 
+            <!-- ═══ 四、基本信息 ═══ -->
             <div class="section-card">
-                <h3>四、活动需求（物资 / 场地 / 宣传 / 资金）</h3>
-                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
-                    列出活动所需的各类资源：场地要求、物资清单、宣传渠道、资金预算框架。
-                </p>
-                <textarea class="textarea" placeholder="例：
-【场地】需容纳xxx人的室内/户外场地，具备xxx设施
-【物资】舞台搭建、音响设备、桌椅、宣传物料、签到用品等
-【宣传】公众号推文、社群转发、海报投放、合作媒体
-【资金】详见第三步预算案"
-                          oninput="activityData.planSections.requirements=this.value"
-                          style="min-height:120px;">${esc(p.requirements)}</textarea>
+                <h3>四、基本信息</h3>
+                <div style="display:flex;flex-direction:column;gap:14px;">
+                    <div>
+                        <label>时间 <span style="color:var(--danger);">*</span></label>
+                        <input class="input" placeholder="YYYY年MM月DD日 HH:MM-HH:MM"
+                               value="${escQ(p.dateTime)}"
+                               oninput="activityData.planSections.dateTime=this.value">
+                    </div>
+                    <div>
+                        <label>备选时间 <span style="background:#fff7ed;color:#d97706;padding:1px 8px;border-radius:10px;font-size:11px;">可选</span></label>
+                        <input class="input" placeholder="备选日期及原因"
+                               value="${escQ(p.backupDate)}"
+                               oninput="activityData.planSections.backupDate=this.value">
+                    </div>
+                    <div>
+                        <label>预计地点 <span style="color:var(--danger);">*</span></label>
+                        <input class="input" placeholder="具体场地名称及编号，如「学生活动中心301室」"
+                               value="${escQ(p.location)}"
+                               oninput="activityData.planSections.location=this.value">
+                    </div>
+                    <div>
+                        <label>是否需要协助申请场地</label>
+                        <select style="font-size:13px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);cursor:pointer;"
+                                onchange="activityData.planSections.needVenueBooking=this.value;renderAll();">
+                            <option value="否" ${p.needVenueBooking === '否' ? 'selected' : ''}>否</option>
+                            <option value="是" ${p.needVenueBooking === '是' ? 'selected' : ''}>是</option>
+                        </select>
+                    </div>
+                    ${p.needVenueBooking === '是' ? `
+                    <div style="background:#f8f9fc;border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:4px;">
+                        <h4 style="font-size:14px;font-weight:600;margin-bottom:12px;">🏢 场地预定申请表</h4>
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                                <thead>
+                                    <tr style="background:#fff;">
+                                        <th style="padding:6px 8px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);">社团名称</th>
+                                        <th style="padding:6px 8px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);">活动名称</th>
+                                        <th style="padding:6px 8px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);">场地预定日期</th>
+                                        <th style="padding:6px 8px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);">预订时间段</th>
+                                        <th style="padding:6px 8px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);">活动场地</th>
+                                        <th style="padding:6px 8px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);">活动人数规模</th>
+                                        <th style="padding:6px 8px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);">场地归属部门</th>
+                                        <th style="padding:6px 8px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);">场地实景/规划图</th>
+                                        <th style="padding:6px 8px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);">负责人邮箱/社团邮箱</th>
+                                        <th style="padding:6px 4px;text-align:center;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);width:30px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${p.venueBookings.map((r, i) => `
+                                    <tr>
+                                        <td style="padding:4px 6px;border-bottom:1px solid var(--border);">
+                                            <input class="input" style="width:100%;padding:4px 6px;font-size:11px;" placeholder="社团全称"
+                                                   value="${escQ(r.orgName)}"
+                                                   oninput="activityData.planSections.venueBookings[${i}].orgName=this.value">
+                                        </td>
+                                        <td style="padding:4px 6px;border-bottom:1px solid var(--border);">
+                                            <input class="input" style="width:100%;padding:4px 6px;font-size:11px;" placeholder="活动名称"
+                                                   value="${escQ(r.activityName)}"
+                                                   oninput="activityData.planSections.venueBookings[${i}].activityName=this.value">
+                                        </td>
+                                        <td style="padding:4px 6px;border-bottom:1px solid var(--border);">
+                                            <input class="input" style="width:100%;padding:4px 6px;font-size:11px;" placeholder="YYYY-MM-DD"
+                                                   value="${escQ(r.bookingDate)}"
+                                                   oninput="activityData.planSections.venueBookings[${i}].bookingDate=this.value">
+                                        </td>
+                                        <td style="padding:4px 6px;border-bottom:1px solid var(--border);">
+                                            <input class="input" style="width:100%;padding:4px 6px;font-size:11px;" placeholder="HH:MM-HH:MM"
+                                                   value="${escQ(r.timeSlot)}"
+                                                   oninput="activityData.planSections.venueBookings[${i}].timeSlot=this.value">
+                                        </td>
+                                        <td style="padding:4px 6px;border-bottom:1px solid var(--border);">
+                                            <input class="input" style="width:100%;padding:4px 6px;font-size:11px;" placeholder="如 学生活动中心301"
+                                                   value="${escQ(r.venue)}"
+                                                   oninput="activityData.planSections.venueBookings[${i}].venue=this.value">
+                                        </td>
+                                        <td style="padding:4px 6px;border-bottom:1px solid var(--border);">
+                                            <input class="input" style="width:100%;padding:4px 6px;font-size:11px;" placeholder="XX人"
+                                                   value="${escQ(r.headcount)}"
+                                                   oninput="activityData.planSections.venueBookings[${i}].headcount=this.value">
+                                        </td>
+                                        <td style="padding:4px 6px;border-bottom:1px solid var(--border);">
+                                            <input class="input" style="width:100%;padding:4px 6px;font-size:11px;" placeholder=""
+                                                   value="${escQ(r.dept)}"
+                                                   oninput="activityData.planSections.venueBookings[${i}].dept=this.value">
+                                        </td>
+                                        <td style="padding:4px 6px;border-bottom:1px solid var(--border);">
+                                            <input class="input" style="width:100%;padding:4px 6px;font-size:11px;" placeholder="链接或已附"
+                                                   value="${escQ(r.floorPlan)}"
+                                                   oninput="activityData.planSections.venueBookings[${i}].floorPlan=this.value">
+                                        </td>
+                                        <td style="padding:4px 6px;border-bottom:1px solid var(--border);">
+                                            <input class="input" style="width:100%;padding:4px 6px;font-size:11px;" placeholder="xxx@example.com"
+                                                   value="${escQ(r.email)}"
+                                                   oninput="activityData.planSections.venueBookings[${i}].email=this.value">
+                                        </td>
+                                        <td style="padding:4px 2px;border-bottom:1px solid var(--border);text-align:center;">
+                                            <button style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:12px;"
+                                                    onclick="activityData.planSections.venueBookings.splice(${i},1);renderAll();"
+                                                    title="删除此行">✕</button>
+                                        </td>
+                                    </tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        <button class="btn btn-outline btn-sm" style="margin-top:8px;"
+                                onclick="activityData.planSections.venueBookings.push({orgName:'',activityName:'',bookingDate:'',timeSlot:'',venue:'',headcount:'',dept:'',floorPlan:'',email:''});renderAll();">
+                            + 添加场地预定
+                        </button>
+                    </div>
+                    ` : ''}
+                    <div>
+                        <label>合作社团 / 单位 <span style="background:#fff7ed;color:#d97706;padding:1px 8px;border-radius:10px;font-size:11px;">可选</span></label>
+                        <input class="input" placeholder="合作方全称及对接人姓名+联系方式"
+                               value="${escQ(p.partner)}"
+                               oninput="activityData.planSections.partner=this.value">
+                    </div>
+                    <div>
+                        <label>面向对象 <span style="background:#fff7ed;color:#d97706;padding:1px 8px;border-radius:10px;font-size:11px;">可选</span></label>
+                        <input class="input" placeholder="明确参与人群范围，如「全校本科生」「XX学院大二学生」"
+                               value="${escQ(p.targetAudience)}"
+                               oninput="activityData.planSections.targetAudience=this.value">
+                    </div>
+                </div>
             </div>
 
+            <!-- ═══ 五、预计参与人数 ═══ -->
             <div class="section-card">
-                <h3>五、执行计划与分工（行事历）</h3>
-                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
-                    按时间线列出关键节点，明确每项任务的负责人和交付物。
-                </p>
-                <textarea class="textarea" placeholder="例：
-| 时间节点 | 任务 | 负责人 | 交付物 |
-|---------|------|--------|--------|
-| T-8周 | 场地确认 | 张三 | 场地合同 |
-| T-6周 | 嘉宾邀请 | 李四 | 嘉宾确认函 |
-| T-4周 | 物料采购 | 王五 | 采购清单 |
-| T-1周 | 现场彩排 | 全员 | 彩排报告 |"
-                          oninput="activityData.planSections.execution=this.value"
-                          style="min-height:120px;">${esc(p.execution)}</textarea>
+                <h3>五、预计参与人数</h3>
+                <div style="display:flex;flex-direction:column;gap:14px;">
+                    <div>
+                        <label>目标人数 <span style="color:var(--danger);">*</span></label>
+                        <input class="input" placeholder="XX人"
+                               value="${escQ(p.targetCount)}"
+                               oninput="activityData.planSections.targetCount=this.value">
+                    </div>
+                    <div>
+                        <label>上限控制 <span style="background:#fff7ed;color:#d97706;padding:1px 8px;border-radius:10px;font-size:11px;">可选</span></label>
+                        <input class="input" placeholder="XX人，若需报名请注明报名渠道及截止时间"
+                               value="${escQ(p.maxCount)}"
+                               oninput="activityData.planSections.maxCount=this.value">
+                    </div>
+                    <div>
+                        <label>人员构成 <span style="background:#fff7ed;color:#d97706;padding:1px 8px;border-radius:10px;font-size:11px;">可选</span></label>
+                        <input class="input" placeholder="如「社团成员XX人 + 外部参与者XX人」"
+                               value="${escQ(p.composition)}"
+                               oninput="activityData.planSections.composition=this.value">
+                    </div>
+                </div>
             </div>
 
+            <!-- ═══ 六、活动执行方案 ═══ -->
             <div class="section-card">
-                <h3>六、风险预案（突发情况处置）</h3>
-                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
+                <h3>六、活动执行方案 <span style="color:var(--danger);">*</span></h3>
+                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">
+                    根据活动类型填写各环节安排。表格形式为参考，可根据需要调整。
+                </p>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead>
+                            <tr style="background:#f8f9fc;">
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);width:18%;">时间节点</th>
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);width:16%;">环节名称</th>
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);width:14%;">开展形式</th>
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);">核心环节说明</th>
+                                <th style="padding:8px 10px;text-align:center;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);width:36px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${p.executionPlan.map((r, i) => `
+                            <tr>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <input class="input" style="width:100%;padding:6px 8px;font-size:12px;" placeholder="如 14:00-14:10"
+                                           value="${escQ(r.time)}"
+                                           oninput="activityData.planSections.executionPlan[${i}].time=this.value">
+                                </td>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <input class="input" style="width:100%;padding:6px 8px;font-size:12px;" placeholder="如 夹零食游戏"
+                                           value="${escQ(r.name)}"
+                                           oninput="activityData.planSections.executionPlan[${i}].name=this.value">
+                                </td>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <input class="input" style="width:100%;padding:6px 8px;font-size:12px;" placeholder="体验/教学/展示"
+                                           value="${escQ(r.format)}"
+                                           oninput="activityData.planSections.executionPlan[${i}].format=this.value">
+                                </td>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <input class="input" style="width:100%;padding:6px 8px;font-size:12px;" placeholder="该环节具体说明"
+                                           value="${escQ(r.description)}"
+                                           oninput="activityData.planSections.executionPlan[${i}].description=this.value">
+                                </td>
+                                <td style="padding:6px 4px;border-bottom:1px solid var(--border);text-align:center;">
+                                    <button style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:14px;"
+                                            onclick="activityData.planSections.executionPlan.splice(${i},1);renderAll();"
+                                            title="删除此行">✕</button>
+                                </td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn btn-outline btn-sm" style="margin-top:10px;"
+                        onclick="activityData.planSections.executionPlan.push({time:'',name:'',format:'',description:''});renderAll();">
+                    + 添加环节
+                </button>
+            </div>
+
+            <!-- ═══ 七、基础物资需求（可选） ═══ -->
+            <div class="section-card">
+                <h3>七、基础物资需求 <span style="background:#fff7ed;color:#d97706;padding:1px 8px;border-radius:10px;font-size:11px;">可选</span></h3>
+                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">
+                    大型活动策划时需社联和学校提供的基础物资支持。小型活动可留空跳过。
+                </p>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead>
+                            <tr style="background:#f8f9fc;">
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);">物资类型</th>
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);">具体需求</th>
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);width:70px;">数量</th>
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);width:70px;">单位</th>
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);">特殊要求</th>
+                                <th style="padding:8px 10px;text-align:center;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);width:36px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${p.basicMaterials.map((r, i) => `
+                            <tr>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <input class="input" style="width:100%;padding:6px 8px;font-size:12px;" placeholder="物资类型"
+                                           value="${escQ(r.type)}"
+                                           oninput="activityData.planSections.basicMaterials[${i}].type=this.value">
+                                </td>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <input class="input" style="width:100%;padding:6px 8px;font-size:12px;" placeholder="如 长桌/折叠椅"
+                                           value="${escQ(r.needs)}"
+                                           oninput="activityData.planSections.basicMaterials[${i}].needs=this.value">
+                                </td>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <input class="input" style="width:100%;padding:6px 8px;font-size:12px;text-align:right;" placeholder="0" type="number" min="0"
+                                           value="${r.quantity || ''}"
+                                           oninput="activityData.planSections.basicMaterials[${i}].quantity=this.value">
+                                </td>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <input class="input" style="width:100%;padding:6px 8px;font-size:12px;text-align:center;" placeholder="张/把/个/套"
+                                           value="${escQ(r.unit)}"
+                                           oninput="activityData.planSections.basicMaterials[${i}].unit=this.value">
+                                </td>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <input class="input" style="width:100%;padding:6px 8px;font-size:12px;" placeholder="如 需提前1小时摆放到位"
+                                           value="${escQ(r.requirements)}"
+                                           oninput="activityData.planSections.basicMaterials[${i}].requirements=this.value">
+                                </td>
+                                <td style="padding:6px 4px;border-bottom:1px solid var(--border);text-align:center;">
+                                    <button style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:14px;"
+                                            onclick="activityData.planSections.basicMaterials.splice(${i},1);renderAll();"
+                                            title="删除此行">✕</button>
+                                </td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn btn-outline btn-sm" style="margin-top:10px;"
+                        onclick="activityData.planSections.basicMaterials.push({type:'',needs:'',quantity:'',unit:'',requirements:''});renderAll();">
+                    + 添加基础物资
+                </button>
+            </div>
+
+            <!-- ═══ 八、执行方案 — 人员与时间节点 ═══ -->
+            <div class="section-card">
+                <h3>八、执行方案 — 人员与时间节点 <span style="background:#fff7ed;color:#d97706;padding:1px 8px;border-radius:10px;font-size:11px;">可选</span></h3>
+
+                <h4 style="font-size:14px;font-weight:600;margin-bottom:10px;">📦 采购阶段</h4>
+                <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
+                    <div>
+                        <label>完成时间</label>
+                        <input class="input" placeholder="MM月DD日前完成所有物资采购"
+                               value="${escQ(p.procurementTime)}"
+                               oninput="activityData.planSections.procurementTime=this.value">
+                    </div>
+                    <div>
+                        <label>负责人</label>
+                        <input class="input" placeholder="姓名 + 联系方式"
+                               value="${escQ(p.procurementPerson)}"
+                               oninput="activityData.planSections.procurementPerson=this.value">
+                    </div>
+                </div>
+
+                <h4 style="font-size:14px;font-weight:600;margin-bottom:10px;">🎯 现场执行</h4>
+                <div style="margin-bottom:20px;">
+                    <label>总负责人</label>
+                    <input class="input" placeholder="姓名 + 联系方式"
+                           value="${escQ(p.onSiteManager)}"
+                           oninput="activityData.planSections.onSiteManager=this.value">
+                </div>
+
+                <h4 style="font-size:14px;font-weight:600;margin-bottom:10px;">🔚 后期收尾</h4>
+                <div style="display:flex;flex-direction:column;gap:12px;">
+                    <div>
+                        <label>物资归还</label>
+                        <input class="input" placeholder="负责人 + 联系方式/微信号"
+                               value="${escQ(p.returnPlan)}"
+                               oninput="activityData.planSections.returnPlan=this.value">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ 九、应急预案 ═══ -->
+            <div class="section-card">
+                <h3>九、应急预案 <span style="color:var(--danger);">*</span></h3>
+                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">
                     识别可能出现的突发情况，制定对应的应急处理方案。
                 </p>
-                <textarea class="textarea" placeholder="例：
-【天气风险】如遇雨天，启动室内备用场地方案
-【设备故障】现场配备备用音响/投影设备，技术人员全程待命
-【人员不足】志愿者候补名单，关键岗位AB角互备
-【安全事件】设置医疗急救点，安保人员每xxx区域配置x名
-【舆情风险】指定专人负责现场舆情监控与处理"
-                          oninput="activityData.planSections.riskPlan=this.value"
-                          style="min-height:120px;">${esc(p.riskPlan)}</textarea>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead>
+                            <tr style="background:#f8f9fc;">
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);width:25%;">风险类型</th>
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);">应对措施</th>
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);width:15%;">责任人</th>
+                                <th style="padding:8px 10px;text-align:center;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);width:36px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${p.emergencyPlan.map((r, i) => `
+                            <tr>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <input class="input" style="width:100%;padding:6px 8px;font-size:12px;" placeholder="风险类型"
+                                           value="${escQ(r.risk)}"
+                                           oninput="activityData.planSections.emergencyPlan[${i}].risk=this.value">
+                                </td>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <input class="input" style="width:100%;padding:6px 8px;font-size:12px;" placeholder="如：${emergencyExamples[r.risk] || '提前准备雨棚/转至室内备用场地'}"
+                                           value="${escQ(r.response)}"
+                                           oninput="activityData.planSections.emergencyPlan[${i}].response=this.value">
+                                </td>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <input class="input" style="width:100%;padding:6px 8px;font-size:12px;" placeholder="姓名"
+                                           value="${escQ(r.person)}"
+                                           oninput="activityData.planSections.emergencyPlan[${i}].person=this.value">
+                                </td>
+                                <td style="padding:6px 4px;border-bottom:1px solid var(--border);text-align:center;">
+                                    <button style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:14px;"
+                                            onclick="activityData.planSections.emergencyPlan.splice(${i},1);renderAll();"
+                                            title="删除此行">✕</button>
+                                </td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn btn-outline btn-sm" style="margin-top:10px;"
+                        onclick="activityData.planSections.emergencyPlan.push({risk:'',response:'',person:''});renderAll();">
+                    + 添加风险项
+                </button>
             </div>
 
+            <!-- ═══ 十、宣传方式（可选） ═══ -->
             <div class="section-card">
-                <h3>📎 附件上传（可选）</h3>
-                <p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">
-                    支持上传场地照片、参考资料、流程图等辅助文件。
-                </p>
-                <button class="btn btn-outline" onclick="showToast('附件上传功能待实现（此处可对接文件存储）')" >
+                <h3>十、宣传方式 <span style="background:#fff7ed;color:#d97706;padding:1px 8px;border-radius:10px;font-size:11px;">可选</span></h3>
+
+                <h4 style="font-size:14px;font-weight:600;margin-bottom:10px;">🔥 前期预热</h4>
+                <textarea class="textarea" placeholder="线上：[公众号推文/朋友圈海报/社群转发/短视频预告]
+线下：[张贴海报]"
+                          oninput="activityData.planSections.publicityPre=this.value"
+                          style="min-height:80px;margin-bottom:16px;">${escQ(p.publicityPre)}</textarea>
+
+                <h4 style="font-size:14px;font-weight:600;margin-bottom:10px;">📝 后期展示</h4>
+                <textarea class="textarea" placeholder="成果展示：[精选照片集/视频剪辑]"
+                          oninput="activityData.planSections.publicityPost=this.value"
+                          style="min-height:80px;">${escQ(p.publicityPost)}</textarea>
+            </div>
+
+            <!-- ═══ 📎 附件上传（可选） ═══ -->
+            <div class="section-card">
+                <h3>📎 附件上传 <span style="background:#fff7ed;color:#d97706;padding:1px 8px;border-radius:10px;font-size:11px;">可选</span></h3>
+                <button class="btn btn-outline" onclick="showToast('附件上传功能待实现（此处可对接文件存储）')">
                     📤 上传附件
                 </button>
             </div>
 
-            <div style="font-size:12px;color:var(--text-secondary);padding:0 4px;">
-                已填写：${[p.overview, p.purpose, p.contentFlow, p.requirements, p.execution, p.riskPlan].filter(Boolean).length} / 6 个部分
+            <!-- ── Progress indicator ── -->
+            <div style="font-size:12px;color:var(--text-secondary);padding:0 4px;display:flex;flex-wrap:wrap;gap:8px;">
+                <span>必填项：${filledRequired} / 6</span>
+                <span>|</span>
+                <span style="color:${hasExecPlan ? 'var(--success)' : 'var(--text-secondary)'};">
+                    执行方案 ${hasExecPlan ? '✅' : '⚠️ 待填写'}
+                </span>
+                <span>|</span>
+                <span style="color:${hasEmergency ? 'var(--success)' : 'var(--text-secondary)'};">
+                    应急预案 ${hasEmergency ? '✅' : '⚠️ 待填写'}
+                </span>
             </div>
 
             <div class="btn-group">
@@ -1593,46 +2039,197 @@
         }
 
         // ═══════════════════════════════════════════════
-        // STEP 2: 编制预算案
+        // STEP 2: 编制预算案 — 学生活动经费申请表
         // ═══════════════════════════════════════════════
         function renderStep2() {
             const done = completedSteps.has(1);
-            const total = activityData.budget.reduce((s, b) => s + Number(b.cost), 0);
+
+            // ── Lazy init: auto-fill from Step 1 material budget if empty ──
+            if (!activityData.budget || activityData.budget.length === 0) {
+                activityData.budget = [{ name: "", unitPrice: "", unit: "", quantity: "", reusable: "否", purpose: "", purchaseLink: "" }];
+            }
+
+            // ── Total calculation ──
+            const calcRowTotal = (r) => {
+                const price = parseFloat(r.unitPrice) || 0;
+                const qty = parseFloat(r.quantity) || 0;
+                return price * qty;
+            };
+            const grandTotal = activityData.budget.reduce((sum, r) => sum + calcRowTotal(r), 0);
+            const hasValidItem = activityData.budget.some(b => (b.name || "").trim() && (parseFloat(b.unitPrice) || 0) > 0);
+
+            const escQ = (v) => esc(v || "");
+
             return `
             <h2>💰 编制预算案</h2>
-            <p class="subtitle">根据策划内容，逐项制定活动预算明细。</p>
+            <p class="subtitle">学生活动经费申请表 — 按策划内容逐项制定活动预算明细。</p>
 
+            <!-- ═══ 基本信息 ═══ -->
             <div class="section-card">
-                <h3>预算明细</h3>
-                <table class="budget-table">
-                    <thead>
-                        <tr><th>项目</th><th style="text-align:right;width:140px;">预估费用（元）</th></tr>
-                    </thead>
-                    <tbody id="budgetBody">
-                        ${activityData.budget.map((b, i) => `
-                        <tr>
-                            <td>${esc(b.item)}</td>
-                            <td class="input-cell">
-                                <input type="number" min="0" value="${b.cost}"
-                                       oninput="activityData.budget[${i}].cost=Number(this.value);renderAll()"
-                                       >
-                            </td>
-                        </tr>`).join('')}
-                        <tr class="total-row"><td>💰 合计</td><td style="text-align:right;font-weight:700;">¥ ${total.toLocaleString()}</td></tr>
-                    </tbody>
-                </table>
+                <h3>📋 基本信息</h3>
+                <div style="display:flex;flex-direction:column;gap:14px;">
+                    <div>
+                        <label>学生组织名称 <span style="color:var(--danger);">*</span></label>
+                        <input class="input" placeholder="填写社团/组织全称"
+                               value="${escQ(activityData.organizationName)}"
+                               oninput="activityData.organizationName=this.value">
+                    </div>
+                    <div>
+                        <label>活动名称</label>
+                        <input class="input" value="${escQ(activityData.name) || '（请先在标题栏命名活动）'}" disabled
+                               style="${activityData.name ? '' : 'color:var(--text-secondary);'}">
+                    </div>
+                    <div>
+                        <label>活动时间</label>
+                        <input class="input" value="${escQ(activityData.planSections.dateTime) || '（请先在策划案中填写时间）'}" disabled
+                               style="${activityData.planSections.dateTime ? '' : 'color:var(--text-secondary);'}">
+                    </div>
+                    <div>
+                        <label>活动负责人及联系方式 <span style="color:var(--danger);">*</span></label>
+                        <input class="input" placeholder="姓名 + 手机号/微信号"
+                               value="${escQ(activityData.activityLeader)}"
+                               oninput="activityData.activityLeader=this.value">
+                    </div>
+                </div>
             </div>
 
+            <!-- ═══ 经费预算明细 ═══ -->
             <div class="section-card">
-                <h3>预算说明</h3>
-                <textarea class="textarea" placeholder="预算编制的依据和说明（可选）..."
-                           style="min-height:80px;"></textarea>
+                <h3>💵 经费预算明细 <span style="color:var(--danger);">*</span></h3>
+                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">
+                    逐项列出活动所需物品及其费用，总额自动计算。
+                </p>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead>
+                            <tr style="background:#f8f9fc;">
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);">物品名称</th>
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);width:90px;">单价（元）</th>
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);width:80px;">单位</th>
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);width:70px;">数量</th>
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);width:100px;">总额（元）</th>
+                                <th style="padding:8px 10px;text-align:center;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);width:90px;">可重复利用</th>
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);">用途</th>
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);">采购链接</th>
+                                <th style="padding:8px 4px;text-align:center;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);width:36px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${activityData.budget.map((r, i) => {
+                                const rowTotal = calcRowTotal(r);
+                                return `
+                            <tr>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <input class="input" style="width:100%;padding:6px 8px;font-size:12px;" placeholder="物品名称"
+                                           value="${escQ(r.name)}"
+                                           oninput="activityData.budget[${i}].name=this.value;updateBudgetRow(${i})">
+                                </td>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <input class="input" style="width:100%;padding:6px 8px;font-size:12px;text-align:right;" placeholder="0" type="number" min="0"
+                                           value="${r.unitPrice || ''}"
+                                           oninput="activityData.budget[${i}].unitPrice=this.value;updateBudgetRow(${i})">
+                                </td>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <input class="input" style="width:100%;padding:6px 8px;font-size:12px;text-align:center;" placeholder="个/套/箱"
+                                           value="${escQ(r.unit)}"
+                                           oninput="activityData.budget[${i}].unit=this.value">
+                                </td>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <input class="input" style="width:100%;padding:6px 8px;font-size:12px;text-align:right;" placeholder="0" type="number" min="0"
+                                           value="${r.quantity || ''}"
+                                           oninput="activityData.budget[${i}].quantity=this.value;updateBudgetRow(${i})">
+                                </td>
+                                <td id="budgetRowTotal${i}" style="padding:6px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:500;color:var(--text);">
+                                    ${rowTotal > 0 ? rowTotal.toLocaleString() : '—'}
+                                </td>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);text-align:center;">
+                                    <select style="font-size:12px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);"
+                                            onchange="activityData.budget[${i}].reusable=this.value">
+                                        <option value="否" ${r.reusable === '否' ? 'selected' : ''}>否</option>
+                                        <option value="是" ${r.reusable === '是' ? 'selected' : ''}>是</option>
+                                    </select>
+                                </td>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <input class="input" style="width:100%;padding:6px 8px;font-size:12px;" placeholder="用于哪个环节"
+                                           value="${escQ(r.purpose)}"
+                                           oninput="activityData.budget[${i}].purpose=this.value">
+                                </td>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <input class="input" style="width:100%;padding:6px 8px;font-size:12px;" placeholder="粘贴商品链接"
+                                           value="${escQ(r.purchaseLink)}"
+                                           oninput="activityData.budget[${i}].purchaseLink=this.value">
+                                </td>
+                                <td style="padding:6px 4px;border-bottom:1px solid var(--border);text-align:center;">
+                                    <button style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:14px;"
+                                            onclick="activityData.budget.splice(${i},1);renderAll();"
+                                            title="删除此行">✕</button>
+                                </td>
+                            </tr>`;
+                            }).join('')}
+                            <tr style="background:#fafbfc;font-weight:600;">
+                                <td style="padding:10px;border-top:2px solid var(--text);">💰 合计</td>
+                                <td style="padding:10px;border-top:2px solid var(--text);" colspan="3"></td>
+                                <td id="budgetGrandTotal" style="padding:10px;border-top:2px solid var(--text);text-align:right;font-weight:700;">
+                                    ¥ ${grandTotal.toLocaleString()}
+                                </td>
+                                <td style="padding:10px;border-top:2px solid var(--text);" colspan="4"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn btn-outline btn-sm" style="margin-top:10px;"
+                        onclick="activityData.budget.push({name:'',unitPrice:'',unit:'',quantity:'',reusable:'否',purpose:'',purchaseLink:''});renderAll();">
+                    + 添加物品
+                </button>
+            </div>
+
+            <!-- ═══ 审批栏 ═══ -->
+            <div class="section-card">
+                <h3>✍️ 审批栏</h3>
+                <div style="display:flex;flex-direction:column;gap:14px;">
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <div style="flex:1;min-width:180px;">
+                            <label>财务负责人</label>
+                            <input class="input" placeholder="姓名"
+                                   value="${escQ(activityData.financePerson)}"
+                                   oninput="activityData.financePerson=this.value">
+                        </div>
+                        <div style="flex:1;min-width:180px;">
+                            <label>活动负责人</label>
+                            <input class="input" placeholder="姓名"
+                                   value="${escQ(activityData.approvalActivityLeader || '')}"
+                                   oninput="activityData.approvalActivityLeader=this.value">
+                        </div>
+                    </div>
+                    <div>
+                        <label>时间</label>
+                        <input class="input" placeholder="YYYY年MM月DD日"
+                               value="${escQ(activityData.approvalDate)}"
+                               oninput="activityData.approvalDate=this.value">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ 备注 ═══ -->
+            <div class="section-card" style="background:#fff7ed;border-color:#fde68a;">
+                <h3 style="color:#d97706;">📌 备注</h3>
+                <ol style="font-size:13px;color:var(--text-secondary);padding-left:20px;line-height:1.8;">
+                    <li>学生活动经费申请表务必在活动举办<strong>前两周</strong>递交；</li>
+                    <li>经费预算需附活动策划书，否则不予审核。</li>
+                </ol>
+            </div>
+
+            <!-- ── Progress ── -->
+            <div style="font-size:12px;color:var(--text-secondary);padding:0 4px;">
+                预算物品：${activityData.budget.length} 项
+                ｜ 有效明细：<span id="budgetProgressValid">${hasValidItem ? '✅' : '⚠️ 请至少添加一项有单价和名称的物品'}</span>
+                ｜ 总计：<span id="budgetProgressTotal"><strong>¥ ${grandTotal.toLocaleString()}</strong></span>
             </div>
 
             <div class="btn-group">
                 <button class="btn btn-outline" onclick="prevStep()">← 上一步</button>
-                <button class="btn btn-primary btn-lg" onclick="completeStep(1)">
-                    ${done ? '✓ 已完成' : `确认预算（合计 ¥${total.toLocaleString()}）→`}
+                <button id="budgetConfirmBtn" class="btn btn-primary btn-lg" onclick="completeStep(1)">
+                    ${done ? '✓ 已完成' : `确认预算（合计 ¥${grandTotal.toLocaleString()}）→`}
                 </button>
             </div>`;
         }
@@ -1656,27 +2253,29 @@
                     <tr><td style="padding:6px 0;color:var(--text-secondary);">策划方案</td>
                         <td>${activityData.planContent ? '✅ 已编写（' + activityData.planContent.length + '字）' : '⚠️ 待完善'}</td></tr>
                     <tr><td style="padding:6px 0;color:var(--text-secondary);">预算总额</td>
-                        <td><strong>¥ ${activityData.budget.reduce((s,b)=>s+Number(b.cost),0).toLocaleString()}</strong></td></tr>
+                        <td><strong>¥ ${activityData.budget.reduce((s,b)=>s+(parseFloat(b.unitPrice)||0)*(parseFloat(b.quantity)||0),0).toLocaleString()}</strong></td></tr>
                 </table>
             </div>
 
             <div class="section-card">
-                <h3>📤 选择处理方式</h3>
+                <h3>📤 导出文件</h3>
                 <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                    <button class="btn btn-primary" onclick="submitApproval()" >
-                        📨 提交审批
+                    <button class="btn btn-primary" onclick="exportProposalWord()">
+                        📝 导出策划案（Word）
                     </button>
-                    <button class="btn btn-outline" onclick="showToast('文件已导出为 PDF（模拟）')" >
-                        📥 导出 PDF
+                    <button class="btn btn-outline" onclick="exportBudgetExcel()">
+                        📊 导出预算案（Excel）
                     </button>
-                    <button class="btn btn-outline" onclick="showToast('文件已导出为 Word（模拟）')" >
-                        📥 导出 Word
-                    </button>
-                </div>
-                <div id="approvalStatus" style="margin-top:16px;${activityData.approved ? '' : 'display:none'}">
-                    <p style="color:var(--success);font-weight:500;">✅ 审批已通过（模拟）</p>
                 </div>
             </div>
+
+            ${activityData.planSections.needVenueBooking === '是' && activityData.planSections.venueBookings && activityData.planSections.venueBookings.length > 0 ? `
+            <div class="section-card">
+                <h3>🏢 场地预定</h3>
+                <button class="btn btn-outline" onclick="exportVenueBookingExcel()" style="border-color:var(--success);color:var(--success);">
+                    📥 导出场地预定申请表（Excel）
+                </button>
+            </div>` : ''}
 
             <div class="btn-group">
                 <button class="btn btn-outline" onclick="prevStep()">← 上一步</button>
@@ -1686,47 +2285,281 @@
             </div>`;
         }
 
-        function submitApproval() {
-            activityData.approved = true;
-            showToast("📨 审批已提交并通过（模拟流程）");
-            renderAll();
+        // 预算行输入：只更新数据与合计显示，不整页重绘，避免输入框失去焦点闪屏
+        function updateBudgetRow(index) {
+            const row = activityData.budget[index];
+            if (!row) return;
+            const calcRowTotal = (r) => (parseFloat(r.unitPrice) || 0) * (parseFloat(r.quantity) || 0);
+            const rowTotal = calcRowTotal(row);
+            const rowEl = document.getElementById("budgetRowTotal" + index);
+            if (rowEl) rowEl.textContent = rowTotal > 0 ? rowTotal.toLocaleString() : "—";
+            const grandTotal = activityData.budget.reduce((s, r) => s + calcRowTotal(r), 0);
+            const totalEl = document.getElementById("budgetGrandTotal");
+            if (totalEl) totalEl.textContent = "¥ " + grandTotal.toLocaleString();
+            const btn = document.getElementById("budgetConfirmBtn");
+            if (btn && !completedSteps.has(1)) {
+                btn.textContent = `确认预算（合计 ¥${grandTotal.toLocaleString()}）→`;
+            }
+            const progEl = document.getElementById("budgetProgressTotal");
+            if (progEl) progEl.innerHTML = `<strong>¥ ${grandTotal.toLocaleString()}</strong>`;
+            const hasValid = activityData.budget.some(b => (b.name || "").trim() && (parseFloat(b.unitPrice) || 0) > 0);
+            const validEl = document.getElementById("budgetProgressValid");
+            if (validEl) validEl.textContent = hasValid ? "✅" : "⚠️ 请至少添加一项有单价和名称的物品";
+        }
+
+        // ── Export: 策划案 → Word ──
+        function exportProposalWord() {
+            const p = activityData.planSections;
+            const name = activityData.name || '未命名活动';
+            const escT = (v) => (v || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+            // Section 六: execution plan table
+            const execRows = (p.executionPlan || []).filter(r => (r.time||'').trim()||(r.name||'').trim());
+            const execTable = execRows.length ? `
+            <table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:11px;margin-top:8px;">
+            <tr style="background:#f0f0f0;"><th>时间节点</th><th>环节名称</th><th>开展形式</th><th>核心环节说明</th></tr>
+            ${execRows.map(r => `<tr><td>${escT(r.time)}</td><td>${escT(r.name)}</td><td>${escT(r.format)}</td><td>${escT(r.description)}</td></tr>`).join('')}
+            </table>` : '';
+
+            // Section 七: material budget table（数据来自第二步「编制预算案」）
+            const mbRows = (activityData.budget || []).filter(r => (r.name||'').trim());
+            const mbTable = mbRows.length ? `
+            <table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:11px;margin-top:8px;">
+            <tr style="background:#f0f0f0;"><th>物品名称</th><th>单价（元）</th><th>单位</th><th>数量</th><th>总额（元）</th><th>可重复利用</th><th>用途</th></tr>
+            ${mbRows.map(r => `<tr><td>${escT(r.name)}</td><td>${escT(r.unitPrice)}</td><td>${escT(r.unit)}</td><td>${escT(r.quantity)}</td><td>${((parseFloat(r.unitPrice)||0)*(parseFloat(r.quantity)||0)).toLocaleString()}</td><td>${escT(r.reusable)}</td><td>${escT(r.purpose)}</td></tr>`).join('')}
+            </table>` : '';
+
+            // Section 八: basic materials table
+            const bmRows = (p.basicMaterials || []).filter(r => (r.type||'').trim()||(r.needs||'').trim());
+            const bmTable = bmRows.length ? `
+            <table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:11px;margin-top:8px;">
+            <tr style="background:#f0f0f0;"><th>物资类型</th><th>具体需求</th><th>数量</th><th>单位</th><th>特殊要求</th></tr>
+            ${bmRows.map(r => `<tr><td>${escT(r.type)}</td><td>${escT(r.needs)}</td><td>${escT(r.quantity)}</td><td>${escT(r.unit)}</td><td>${escT(r.requirements)}</td></tr>`).join('')}
+            </table>` : '';
+
+            // Section 十: emergency plan table
+            const emRows = (p.emergencyPlan || []).filter(r => (r.response||'').trim());
+            const emTable = emRows.length ? `
+            <table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:11px;margin-top:8px;">
+            <tr style="background:#f0f0f0;"><th>风险类型</th><th>应对措施</th><th>责任人</th></tr>
+            ${emRows.map(r => `<tr><td>${escT(r.risk)}</td><td>${escT(r.response)}</td><td>${escT(r.person)}</td></tr>`).join('')}
+            </table>` : '';
+
+            const html = `<html xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+            <head><meta charset="UTF-8"><title>${escT(name)} 策划案</title></head>
+            <body>
+            <h1 style="text-align:center;">${escT(name)} 策划案</h1>
+
+            <h2>一、活动名称</h2>
+            <p><b>活动名称：</b>${escT(name)}</p>
+
+            <h2>二、主题</h2>
+            <p><b>核心主题：</b>${escT(p.theme)}</p>
+            ${p.slogan ? `<p><b>副标题/Slogan：</b>${escT(p.slogan)}</p>` : ''}
+
+            <h2>三、目的</h2>
+            <p><b>核心目标：</b>${escT(p.objective)}</p>
+
+            <h2>四、基本信息</h2>
+            <p><b>时间：</b>${escT(p.dateTime)}${p.backupDate ? '（备选：'+escT(p.backupDate)+'）' : ''}</p>
+            <p><b>预计地点：</b>${escT(p.location)}</p>
+            ${p.partner ? `<p><b>合作社团/单位：</b>${escT(p.partner)}</p>` : ''}
+            ${p.targetAudience ? `<p><b>面向对象：</b>${escT(p.targetAudience)}</p>` : ''}
+
+            <h2>五、预计参与人数</h2>
+            <p><b>目标人数：</b>${escT(p.targetCount)}</p>
+            ${p.maxCount ? `<p><b>上限控制：</b>${escT(p.maxCount)}</p>` : ''}
+            ${p.composition ? `<p><b>人员构成：</b>${escT(p.composition)}</p>` : ''}
+
+            <h2>六、活动执行方案</h2>
+            ${execTable || '<p>（未填写）</p>'}
+
+            <h2>七、物资要求</h2>
+            ${mbTable || '<p>（未填写）</p>'}
+
+            ${bmTable ? `<h2>八、基础物资需求</h2>${bmTable}` : ''}
+
+            ${(p.procurementTime||p.procurementPerson||p.onSiteManager||p.returnPlan) ? `
+            <h2>九、执行方案（人员与时间节点）</h2>
+            ${p.procurementTime||p.procurementPerson ? `<h3>采购阶段</h3><p>${[p.procurementTime?'完成时间：'+escT(p.procurementTime):'',p.procurementPerson?'负责人：'+escT(p.procurementPerson):''].filter(Boolean).join('<br>')}</p>` : ''}
+            ${p.onSiteManager ? `<h3>现场执行</h3><p>总负责人：${escT(p.onSiteManager)}</p>` : ''}
+            ${p.returnPlan ? `<h3>后期收尾</h3><p>物资归还：${escT(p.returnPlan)}</p>` : ''}
+            ` : ''}
+
+            <h2>十、应急预案</h2>
+            ${emTable || '<p>（未填写）</p>'}
+
+            ${(p.publicityPre||p.publicityPost) ? `
+            <h2>十一、宣传方式</h2>
+            ${p.publicityPre ? `<h3>前期预热</h3><p style="white-space:pre-wrap;">${escT(p.publicityPre)}</p>` : ''}
+            ${p.publicityPost ? `<h3>后期展示</h3><p style="white-space:pre-wrap;">${escT(p.publicityPost)}</p>` : ''}
+            ` : ''}
+            </body></html>`;
+            const blob = new Blob([html], { type: 'application/msword;charset=UTF-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = (name||'策划案') + ' 策划案.doc';
+            a.click();
+            showToast('📝 策划案已导出（Word）');
+        }
+
+        // ── Export: 预算案 → Excel ──
+        function exportBudgetExcel() {
+            const items = activityData.budget.filter(b => (b.name||'').trim() && (parseFloat(b.unitPrice)||0) > 0);
+            const total = activityData.budget.reduce((s,b)=>s+(parseFloat(b.unitPrice)||0)*(parseFloat(b.quantity)||0),0);
+            const escT = (v) => (v || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const rows = items.map(b => `
+                <tr>
+                    <td>${escT(b.name)}</td>
+                    <td>${escT(b.unitPrice)}</td>
+                    <td>${escT(b.unit)}</td>
+                    <td>${escT(b.quantity)}</td>
+                    <td>${((parseFloat(b.unitPrice)||0)*(parseFloat(b.quantity)||0)).toLocaleString()}</td>
+                    <td>${escT(b.reusable)}</td>
+                    <td>${escT(b.purpose)}</td>
+                    <td>${escT(b.purchaseLink)}</td>
+                </tr>`).join('');
+            const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+            <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>经费预算</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>
+            <body>
+            <h2>学生活动经费申请表 — ${escT(activityData.name||'未命名活动')}</h2>
+            <p>学生组织名称：${escT(activityData.organizationName)}　　活动负责人：${escT(activityData.activityLeader)}</p>
+            <table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;">
+            <tr style="background:#f0f0f0;font-weight:bold;">
+                <th>物品名称</th><th>单价（元）</th><th>单位</th><th>数量</th><th>总额（元）</th><th>可重复利用</th><th>用途</th><th>采购链接</th>
+            </tr>${rows}
+            <tr><td colspan="4" style="font-weight:bold;">合计</td><td style="font-weight:bold;">${total.toLocaleString()}</td><td colspan="3"></td></tr>
+            </table>
+            <p>财务负责人：${escT(activityData.financePerson)}　　活动负责人：${escT(activityData.approvalActivityLeader||'')}　　时间：${escT(activityData.approvalDate)}</p>
+            </body></html>`;
+            const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=UTF-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = (activityData.name||'预算案') + ' 经费预算.xls';
+            a.click();
+            showToast('📊 预算案已导出（Excel）');
+        }
+
+        // ── Export: 场地预定申请表 → Excel ──
+        function exportVenueBookingExcel() {
+            const vb = activityData.planSections.venueBookings;
+            if (!vb || vb.length === 0) return;
+            const escT = (v) => (v || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const rows = vb.map(r => `
+                <tr>
+                    <td>${escT(r.orgName)}</td>
+                    <td>${escT(r.activityName||activityData.name)}</td>
+                    <td>${escT(r.bookingDate)}</td>
+                    <td>${escT(r.timeSlot)}</td>
+                    <td>${escT(r.venue||activityData.planSections.location)}</td>
+                    <td>${escT(r.headcount||activityData.planSections.targetCount)}</td>
+                    <td>${escT(r.dept)}</td>
+                    <td>${escT(r.floorPlan)}</td>
+                    <td>${escT(r.email)}</td>
+                </tr>`).join('');
+            const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+            <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>场地预定</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>
+            <body>
+            <h2 style="text-align:center;">活动场地预定申请表</h2>
+            <table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;">
+            <tr style="background:#f0f0f0;font-weight:bold;">
+                <th>社团名称</th><th>活动名称</th><th>场地预定日期</th><th>预订时间段</th><th>活动场地</th><th>活动人数规模</th><th>场地归属部门</th><th>场地实景/规划图</th><th>负责人邮箱/社团邮箱</th>
+            </tr>${rows}</table></body></html>`;
+            const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=UTF-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = '场地预定申请表.xls';
+            a.click();
+            showToast('🏢 场地预定申请表已导出（Excel）');
         }
 
         // ═══════════════════════════════════════════════
-        // STEP 4: 采购Checklist
+        // STEP 4: 采购清单
         // ═══════════════════════════════════════════════
         function renderStep4() {
             const done = completedSteps.has(3);
-            const checked = activityData.checklist.filter(c => c.done).length;
-            const total = activityData.checklist.length;
-            const allDone = total > 0 && checked === total;
+
+            // ── Lazy init + auto-import from budget ──
+            if (!activityData.purchaseList || activityData.purchaseList.length === 0) {
+                activityData.purchaseList = [{ name: "", unitPrice: "", unit: "", quantity: "", status: "待采购", link: "", location: "" }];
+            }
+            const plIsDefault = activityData.purchaseList.length === 1
+                && !(activityData.purchaseList[0].name || "").trim();
+            if (plIsDefault && activityData.budget && activityData.budget.length > 0 && activityData.budget.some(b => (b.name||'').trim())) {
+                activityData.purchaseList = activityData.budget
+                    .filter(b => (b.name||'').trim())
+                    .map(b => ({
+                        name: b.name || "",
+                        unitPrice: b.unitPrice || "",
+                        unit: b.unit || "",
+                        quantity: b.quantity || "",
+                        status: "待采购",
+                        link: b.purchaseLink || "",
+                        location: ""
+                    }));
+            }
+
+            const statusCounts = { '待采购': 0, '已下单': 0, '已到货': 0 };
+            activityData.purchaseList.forEach(r => { if (statusCounts[r.status] !== undefined) statusCounts[r.status]++; });
+            const totalItems = activityData.purchaseList.length;
+
+            const escQ = (v) => esc(v || "");
+
             return `
-            <h2>📦 采购Checklist</h2>
-            <p class="subtitle">审批通过后，自行添加采购项目，全部勾选完成后确认。</p>
+            <h2>📦 采购清单</h2>
+            <p class="subtitle">根据预算明细逐项采购，更新物资状态。首次打开时自动从预算案导入。</p>
 
             <div class="section-card">
-                <h3>采购与资源清单</h3>
-                ${total === 0 ? `<p style="text-align:center;color:var(--text-secondary);padding:20px 0;font-size:13px;">暂无项目，请在下方添加</p>` : ''}
-                <ul class="checklist">
-                    ${activityData.checklist.map((c, i) => `
-                    <li>
-                        <input type="checkbox" id="chk${i}" ${c.done ? 'checked' : ''}
-                               onchange="activityData.checklist[${i}].done=this.checked;renderAll();">
-                        <label for="chk${i}" class="${c.done ? 'item-done' : ''}">${esc(c.item)}</label>
-                        <button style="margin-left:auto;background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:13px;"
-                                onclick="activityData.checklist.splice(${i},1);renderAll();">✕</button>
-                    </li>`).join('')}
-                </ul>
-                <div style="margin-top:12px;display:flex;gap:8px;">
-                    <input class="input" id="newItem" placeholder="输入采购项目名称，如：场地租赁合同确认"
-                           style="flex:1;"
-                           onkeydown="if(event.key==='Enter')addChecklistItem()">
-                    <button class="btn btn-outline" onclick="addChecklistItem()">+ 添加</button>
+                <h3>采购明细表</h3>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead>
+                            <tr style="background:#f8f9fc;">
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);">物资名称</th>
+                                <th style="padding:8px 10px;text-align:left;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);width:130px;">状态</th>
+                                <th style="padding:8px 4px;text-align:center;font-weight:500;color:var(--text-secondary);border-bottom:1px solid var(--border);width:30px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${activityData.purchaseList.map((r, i) => `
+                            <tr>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <input class="input" style="width:100%;padding:6px 8px;font-size:12px;" placeholder="物资名称"
+                                           value="${escQ(r.name)}"
+                                           oninput="activityData.purchaseList[${i}].name=this.value">
+                                </td>
+                                <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
+                                    <select style="font-size:12px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);width:100%;"
+                                            onchange="activityData.purchaseList[${i}].status=this.value;renderAll();">
+                                        <option value="待采购" ${r.status === '待采购' ? 'selected' : ''}>待采购</option>
+                                        <option value="已下单" ${r.status === '已下单' ? 'selected' : ''}>已下单</option>
+                                        <option value="已到货" ${r.status === '已到货' ? 'selected' : ''}>已到货</option>
+                                    </select>
+                                    ${r.status === '已到货' ? `
+                                    <input class="input" style="width:100%;padding:4px 6px;font-size:11px;margin-top:4px;" placeholder="放置位置"
+                                           value="${escQ(r.location)}"
+                                           oninput="activityData.purchaseList[${i}].location=this.value">` : ''}
+                                </td>
+                                <td style="padding:6px 4px;border-bottom:1px solid var(--border);text-align:center;">
+                                    <button style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:14px;"
+                                            onclick="activityData.purchaseList.splice(${i},1);renderAll();"
+                                            title="删除此行">✕</button>
+                                </td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
                 </div>
+                <button class="btn btn-outline btn-sm" style="margin-top:10px;"
+                        onclick="activityData.purchaseList.push({name:'',unitPrice:'',unit:'',quantity:'',status:'待采购',link:'',location:''});renderAll();">
+                    + 添加物品
+                </button>
             </div>
 
-            <div style="font-size:13px;color:${allDone ? 'var(--success)' : 'var(--text-secondary)'};padding:0 4px;">
-                ${total === 0 ? '请至少添加一个采购项目' : `完成进度：${checked} / ${total}` + (allDone ? ' ✅ 全部完成' : '')}
+            <div style="font-size:13px;color:var(--text-secondary);padding:0 4px;display:flex;flex-wrap:wrap;gap:8px;">
+                <span>共 ${totalItems} 项</span><span>|</span>
+                <span style="color:#d97706;">⏳ 待采购：${statusCounts['待采购']}</span>
+                <span style="color:var(--primary);">📦 已下单：${statusCounts['已下单']}</span>
+                <span style="color:var(--success);">✅ 已到货：${statusCounts['已到货']}</span>
             </div>
 
             <div class="btn-group">
@@ -1737,68 +2570,113 @@
             </div>`;
         }
 
-        function addChecklistItem() {
-            const input = document.getElementById("newItem");
-            const val = input.value.trim();
-            if (!val) return;
-            activityData.checklist.push({ item: val, done: false });
-            input.value = "";
-            showToast(`已添加：${val}`);
-            renderAll();
-        }
-
         // ═══════════════════════════════════════════════
-        // STEP 5: 活动进度跟踪
+        // STEP 5: 活动资料上传
         // ═══════════════════════════════════════════════
         function renderStep5() {
             const done = completedSteps.has(4);
-            const milestones = activityData.progressItems || [
-                "策划方案定稿",
-                "场地确认 & 合同签订",
-                "嘉宾/演员确认",
-                "物资采购完成",
-                "宣传推广上线",
-                "票务/报名通道开启",
-                "现场布置完成",
-                "活动执行日",
-                "活动收尾 & 清理",
-                "总结报告提交"
-            ];
-            if (!activityData.progressItems) {
-                activityData.progressItems = milestones;
-                activityData.progressStatus = milestones.map(() => "pending");
-            }
-            const statusOpts = { pending: "⏳ 待开始", doing: "🔄 进行中", done: "✅ 已完成", stuck: "⚠️ 受阻" };
+            const uploads = activityData.uploads || [];
             return `
-            <h2>📊 活动进度跟踪</h2>
-            <p class="subtitle">活动执行过程中，更新和监控各项关键里程碑的进展。</p>
+            <h2>📷 活动资料上传</h2>
+            <p class="subtitle">上传活动相关的图片资料，如现场照片、物料设计图、宣传海报等。</p>
 
             <div class="section-card">
-                <h3>关键里程碑</h3>
-                <div class="progress-steps">
-                    ${activityData.progressItems.map((m, i) => `
-                    <div class="progress-step">
-                        <span style="font-size:20px;">${activityData.progressStatus[i]==='done'?'✅':activityData.progressStatus[i]==='doing'?'🔄':activityData.progressStatus[i]==='stuck'?'⚠️':'⏳'}</span>
-                        <span style="flex:1;font-size:14px;">${esc(m)}</span>
-                        <select style="font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);"
-                                onchange="activityData.progressStatus[${i}]=this.value;renderAll();"
-                                >
-                            ${Object.entries(statusOpts).map(([k,v])=>`<option value="${k}" ${activityData.progressStatus[i]===k?'selected':''}>${v}</option>`).join('')}
-                        </select>
-                    </div>`).join('')}
+                <h3>图片上传窗口</h3>
+                <div class="upload-dropzone" id="uploadDropzone"
+                     onclick="document.getElementById('fileInput').click()"
+                     ondragover="event.preventDefault();this.classList.add('dragover')"
+                     ondragleave="this.classList.remove('dragover')"
+                     ondrop="event.preventDefault();this.classList.remove('dragover');handleImageFiles(event.dataTransfer.files)">
+                    <div style="font-size:40px;line-height:1;">🖼️</div>
+                    <p style="font-weight:600;margin-top:8px;">点击上传，或将图片拖拽到此处</p>
+                    <p style="font-size:12px;color:var(--text-secondary);margin-top:4px;">支持 JPG / PNG / GIF 等图片格式，可多选</p>
+                    <input type="file" id="fileInput" accept="image/*" multiple style="display:none;"
+                           onchange="handleImageFiles(this.files); this.value=''">
                 </div>
             </div>
 
+            ${uploads.length > 0 ? `
+            <div class="section-card">
+                <h3>已上传图片（${uploads.length} 张）</h3>
+                <div class="upload-grid">
+                    ${uploads.map((u, i) => `
+                    <div class="upload-item">
+                        <img src="${u.dataUrl}" alt="${esc(u.name)}">
+                        <div class="upload-item-meta">
+                            <span class="upload-item-name" title="${esc(u.name)}">${esc(u.name)}</span>
+                            <button class="upload-item-remove" onclick="removeUpload(${i})" title="删除">✕</button>
+                        </div>
+                    </div>`).join('')}
+                </div>
+            </div>` : `
             <div style="font-size:13px;color:var(--text-secondary);padding:0 4px;">
-                完成进度：${activityData.progressStatus.filter(s=>s==='done').length} / ${activityData.progressItems.length}
-            </div>
+                尚未上传任何图片，请至少上传一张图片。
+            </div>`}
 
             <div class="btn-group">
                 <button class="btn btn-outline" onclick="prevStep()">← 上一步</button>
                 <button class="btn btn-primary btn-lg" onclick="completeStep(4)">
-                    ${done ? '✓ 已完成' : '更新进度 →'}
+                    ${done ? '✓ 已完成' : '确认上传 →'}
                 </button>
             </div>`;
+        }
+
+        function handleImageFiles(fileList) {
+            const files = Array.from(fileList).filter(f => f.type.startsWith("image/"));
+            if (!files.length) {
+                showToast("⚠️ 请选择图片文件");
+                return;
+            }
+            if (!activityData.uploads) activityData.uploads = [];
+            let pending = files.length;
+            const added = [];
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        added.push({ name: file.name, dataUrl: resizeImage(img) });
+                        finish();
+                    };
+                    img.onerror = finish;
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+            function finish() {
+                if (--pending !== 0) return;
+                if (added.length) {
+                    activityData.uploads.push(...added);
+                    showToast(`✅ 已上传 ${added.length} 张图片`);
+                }
+                renderAll();
+            }
+        }
+
+        // 压缩/缩放图片（最长边 1280px），避免大图撑爆 localStorage
+        function resizeImage(img) {
+            const MAX = 1280;
+            let w = img.naturalWidth || img.width;
+            let h = img.naturalHeight || img.height;
+            if (w > MAX || h > MAX) {
+                const ratio = Math.min(MAX / w, MAX / h);
+                w = Math.round(w * ratio);
+                h = Math.round(h * ratio);
+            }
+            const canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, w, h);
+            return canvas.toDataURL("image/jpeg", 0.85);
+        }
+
+        function removeUpload(index) {
+            activityData.uploads.splice(index, 1);
+            showToast("已删除图片");
+            renderAll();
         }
 
         // ═══════════════════════════════════════════════
@@ -1817,14 +2695,6 @@
                     活动「${esc(activityData.name) || "未命名活动"}」已正式结束。<br>
                     确认后，该活动将标记为完成状态，并进入复盘阶段。
                 </p>
-                <div style="display:flex;gap:12px;justify-content:center;">
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-                        <input type="checkbox" id="confirmDone" style="width:18px;height:18px;accent-color:var(--primary);"
-                               onchange="document.getElementById('btnComplete').disabled=!this.checked"
-                               ${done ? 'checked' : ''}>
-                        <span style="font-size:14px;">我确认活动已全部执行完毕</span>
-                    </label>
-                </div>
             </div>
 
             <div class="btn-group">
@@ -1868,113 +2738,6 @@
 
             <div class="btn-group">
                 <button class="btn btn-outline" onclick="showToast('复盘记录已保存（选填）')">💾 保存复盘记录</button>
-            </div>`;
-        }
-
-        // ═══════════════════════════════════════════════
-        // STEP 7: 归档资料库
-        // ═══════════════════════════════════════════════
-        function renderStep7() {
-            const done = completedSteps.has(6);
-            const archiveItems = [
-                { name: "策划方案文档", type: "📄" },
-                { name: "预算明细表", type: "📊" },
-                { name: "审批记录", type: "📋" },
-                { name: "采购清单", type: "📦" },
-                { name: "活动照片/视频", type: "📸" },
-                { name: "复盘总结", type: "📝" },
-                { name: "参与者名单", type: "👥" },
-                { name: "宣传物料源文件", type: "🎨" }
-            ];
-            return `
-            <h2>📁 归档资料库</h2>
-            <p class="subtitle">将活动相关文档和需要保存的内容打包归入资料库。</p>
-
-            <div class="section-card">
-                <h3>待归档资料</h3>
-                <ul class="checklist">
-                    ${archiveItems.map((a, i) => `
-                    <li>
-                        <input type="checkbox" id="arc${i}" ${(activityData.archivedItems||[]).includes(i) ? 'checked' : ''}
-                               onchange="toggleArchive(${i})" >
-                        <label for="arc${i}">${a.type} ${a.name}</label>
-                    </li>`).join('')}
-                </ul>
-            </div>
-
-            <div class="section-card">
-                <h3>🏷️ 归档标签</h3>
-                <input class="input" placeholder="添加标签以便检索，如：2026、音乐节、户外..."
-                       >
-            </div>
-
-            <div class="btn-group">
-                <button class="btn btn-outline" onclick="prevStep()">← 上一步</button>
-                <button class="btn btn-primary btn-lg" onclick="completeStep(6)">
-                    ${done ? '✓ 已完成' : '确认归档 →'}
-                </button>
-            </div>`;
-        }
-
-        function toggleArchive(index) {
-            if (!activityData.archivedItems) activityData.archivedItems = [];
-            const idx = activityData.archivedItems.indexOf(index);
-            if (idx > -1) activityData.archivedItems.splice(idx, 1);
-            else activityData.archivedItems.push(index);
-        }
-
-        // ═══════════════════════════════════════════════
-        // STEP 8: 获得完成徽章
-        // ═══════════════════════════════════════════════
-        function renderStep8() {
-            const done = completedSteps.has(7);
-            const badgeEarned = done || activityData.badgeEarned;
-            return `
-            <h2>🏆 获得完成徽章</h2>
-            <p class="subtitle">系统发放成就徽章，标志本次活动完美闭环。</p>
-
-            <div class="section-card">
-                <div class="badge-display">
-                    <div class="badge-icon" style="${badgeEarned ? '' : 'filter:grayscale(1);box-shadow:none;'}">
-                        ${badgeEarned ? '🏆' : '🔒'}
-                    </div>
-                    <h3 style="font-size:20px;margin-bottom:6px;">
-                        ${badgeEarned ? '恭喜获得「活动闭环」徽章！' : '距离徽章只差一步'}
-                    </h3>
-                    <p style="color:var(--text-secondary);font-size:14px;line-height:1.6;max-width:400px;margin:0 auto;">
-                        ${badgeEarned
-                            ? `活动「${esc(activityData.name) || "未命名活动"}」已走完全部流程。从策划到复盘，每一步都留下了扎实的足迹。`
-                            : '完成全部 8 个步骤后，即可解锁此成就徽章，标志活动工作流完整闭环。'}
-                    </p>
-                </div>
-            </div>
-
-            ${badgeEarned ? `
-            <div class="section-card">
-                <h3>🎯 成就统计</h3>
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;text-align:center;">
-                    ${[
-                        {label:"总步骤",val:"8/8"},
-                        {label:"策划字数",val:(activityData.planContent||activityData.aiPlan||"").length+"字"},
-                        {label:"预算总额",val:"¥"+activityData.budget.reduce((s,b)=>s+Number(b.cost),0).toLocaleString()},
-                        {label:"自评评分",val:(activityData.rating||0)+"/5 ⭐"},
-                    ].map(s => `
-                    <div style="background:var(--tag-bg);border-radius:8px;padding:14px;">
-                        <div style="font-size:20px;font-weight:700;">${s.val}</div>
-                        <div style="font-size:12px;color:var(--text-secondary);">${s.label}</div>
-                    </div>`).join('')}
-                </div>
-            </div>` : ''}
-
-            <div class="btn-group">
-                <button class="btn btn-outline" onclick="prevStep()">← 上一步</button>
-                ${!badgeEarned ? `
-                <button class="btn btn-primary btn-lg" onclick="completeStep(7)">
-                    🏆 领取徽章
-                </button>` : `
-                <a href="index.html" class="btn btn-primary btn-lg" style="text-decoration:none;">
-                    ← 返回活动列表
-                </a>`}
             </div>`;
         }
 
@@ -2306,21 +3069,28 @@
                 <div class="ai-panel-title" style="margin-top:18px;">拟策划案预览</div>
                 <p class="ai-muted">AI 生成后会在这里预览。确认后可写入当前活动的策划案字段。</p>`;
             }
+            const execText = getAiExecPlanRows(draft)
+                .map(r => [r.time, r.name, r.format, r.description].filter(Boolean).join("｜"))
+                .join("\n");
+            const emergencyText = getAiEmergencyRows(draft)
+                .map(r => [r.risk, r.response, r.person].filter(Boolean).join("："))
+                .join("\n");
             return `
             <div class="ai-panel-title" style="margin-top:18px;">拟策划案预览</div>
             ${[
-                ["活动主题", draft.theme],
-                ["活动目标", draft.objective],
-                ["服务对象", draft.targetAudience],
+                ["活动主题（二）", draft.theme],
+                ["活动目标（三、目的）", draft.objective],
                 ["活动目的/意义", draft.purpose],
-                ["活动内容与流程", draft.contentFlow],
-                ["活动需求", draft.requirements],
-                ["执行计划与分工", draft.execution],
-                ["风险预案", draft.riskPlan]
-            ].map(([title, body]) => `
+                ["活动时间（四）", draft.dateTime],
+                ["预计地点（四）", draft.location],
+                ["服务对象（四）", draft.targetAudience],
+                ["预计人数（五）", draft.targetCount],
+                ["活动执行方案（六）", execText],
+                ["应急预案（九）", emergencyText]
+            ].filter(([, body]) => body && String(body).trim()).map(([title, body]) => `
                 <div class="ai-preview-section">
                     <h4>${title}</h4>
-                    <p>${esc(body)}</p>
+                    <p>${esc(String(body))}</p>
                 </div>
             `).join("")}`;
         }
@@ -2476,15 +3246,25 @@
             const fallback = buildAiDraftPlan(idea);
             const generatedName = isCopiedUserPrompt(draft.name, idea) ? fallback.name : draft.name;
             const generatedTheme = isCopiedUserPrompt(draft.theme, idea) ? fallback.theme : draft.theme;
-            return {
+            const merged = {
                 ...fallback,
                 ...draft,
                 name: generatedName || fallback.name,
                 theme: generatedTheme || fallback.theme,
-                targetAudience: draft.targetAudience || draft.audience || fallback.targetAudience,
-                countPerSession: String(draft.countPerSession || fallback.countPerSession),
-                sessions: String(draft.sessions || fallback.sessions)
+                targetAudience: draft.targetAudience || draft.audience || fallback.targetAudience
             };
+            // 日期：优先新字段 dateTime，其次旧字段年月日拼接，最后回退
+            const legacyDate = [draft.dateYear, draft.dateMonth, draft.dateDay].filter(Boolean).join("-");
+            merged.dateTime = draft.dateTime || (legacyDate ? legacyDate + "（待确认具体时段）" : fallback.dateTime);
+            // 人数：优先新字段 targetCount，其次旧字段 countPerSession × sessions
+            const legacyCount = draft.countPerSession
+                ? (Number(draft.countPerSession) || 0) * (Number(draft.sessions) || 1)
+                : 0;
+            merged.targetCount = draft.targetCount || (legacyCount ? String(legacyCount) : fallback.targetCount);
+            // 结构化字段：新数组优先，否则从旧文本字段解析
+            merged.executionPlan = getAiExecPlanRows(merged);
+            merged.emergencyPlan = getAiEmergencyRows(merged);
+            return merged;
         }
 
         function isCopiedUserPrompt(value, idea) {
@@ -2505,6 +3285,65 @@
             };
         }
 
+        // ── AI 草稿解析辅助：旧文本字段 → 新结构化字段 ──
+        function parseExecPlanTable(md) {
+            const rows = [];
+            if (!md) return rows;
+            const lines = String(md).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            for (const line of lines) {
+                if (line.indexOf("|") < 0) continue;
+                const cells = line.split("|").map(c => c.trim());
+                const body = cells.slice(1, -1); // 去掉首尾空段
+                if (!body.length) continue;
+                if (body[0] === "时间节点" || /^-{2,}$/.test(body[0])) continue; // 表头 / 分隔行
+                if (body.length >= 5) {
+                    // 新表格格式：时间节点 / 环节名称 / 开展形式 / 核心环节说明
+                    rows.push({ time: body[0], name: body[1], format: body[2], description: body[3] });
+                    continue;
+                }
+                const time = body[0] || "";
+                const name = body[1] || "";
+                const rest = body.slice(2).filter(Boolean);
+                const description = rest.map((c, i) => `${["负责人", "交付物"][i] || ""}：${c}`).join("；");
+                if (time || name || description) rows.push({ time, name, format: "", description });
+            }
+            return rows;
+        }
+
+        function parseRiskPlanText(text) {
+            const rows = [];
+            if (!text) return rows;
+            const lines = String(text).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            for (const line of lines) {
+                const cleaned = line.replace(/^\d+[.、]\s*/, "").replace(/^[-•*]\s*/, "").replace(/^【.+?】\s*/, "");
+                const idx = cleaned.indexOf("：");
+                if (idx < 0) continue;
+                rows.push({ risk: cleaned.slice(0, idx).trim(), response: cleaned.slice(idx + 1).trim(), person: "" });
+            }
+            return rows;
+        }
+
+        function getAiExecPlanRows(draft) {
+            if (!draft) return [];
+            if (Array.isArray(draft.executionPlan) && draft.executionPlan.length) return draft.executionPlan;
+            if (draft.execution) {
+                const parsed = parseExecPlanTable(draft.execution);
+                if (parsed.length) return parsed;
+            }
+            if (draft.contentFlow) return [{ time: "", name: "", format: "", description: draft.contentFlow }];
+            return [];
+        }
+
+        function getAiEmergencyRows(draft) {
+            if (!draft) return [];
+            if (Array.isArray(draft.emergencyPlan) && draft.emergencyPlan.length) return draft.emergencyPlan;
+            if (draft.riskPlan) {
+                const parsed = parseRiskPlanText(draft.riskPlan);
+                if (parsed.length) return parsed;
+            }
+            return [];
+        }
+
         function buildAiDraftPlan(idea) {
             const analysis = analyzeActivityIdea(idea);
             const selected = aiHistoryActivities.filter(h => activityData.aiAssistant.selectedHistoryIds.includes(h.id));
@@ -2516,21 +3355,23 @@
             const theme = analysis.theme;
             const safeTime = analysis.recommendedTime || "周末下午或傍晚";
             const coreValue = analysis.valueStatement;
+            const execPlanText = buildExecutionPlan(analysis, safeTime);
+            const riskPlanText = buildRiskPlan(analysis);
             return {
                 name,
                 theme,
                 objective: analysis.objective,
-                dateYear: activityData.planSections.planOverview.dateYear || "2026",
-                dateMonth: activityData.planSections.planOverview.dateMonth || "",
-                dateDay: activityData.planSections.planOverview.dateDay || "",
+                dateTime: activityData.planSections.dateTime || safeTime,
+                location: activityData.planSections.location || "",
                 targetAudience: analysis.targetAudience,
-                countPerSession: activityData.planSections.planOverview.countPerSession || analysis.defaultCount,
-                sessions: activityData.planSections.planOverview.sessions || "1",
+                targetCount: activityData.planSections.targetCount || analysis.defaultCount,
                 purpose: `${coreValue}\n${historyLine}\n本活动的意义在于把社团成员的兴趣、表达和协作转化为一次可参与、可复盘、可延展的活动体验，而不是简单复述用户提出的原始问题。`,
                 contentFlow: buildContentFlow(analysis),
                 requirements: buildRequirements(analysis, safeTime),
-                execution: buildExecutionPlan(analysis, safeTime),
-                riskPlan: buildRiskPlan(analysis)
+                execution: execPlanText,
+                riskPlan: riskPlanText,
+                executionPlan: parseExecPlanTable(execPlanText),
+                emergencyPlan: parseRiskPlanText(riskPlanText)
             };
         }
 
@@ -2765,27 +3606,36 @@
                 showToast("请先和 AI 策划助手对话生成拟策划案。");
                 return;
             }
-            const po = activityData.planSections.planOverview;
             const p = activityData.planSections;
-            const write = (target, key, value) => {
-                if (mode === "overwrite" || !target[key]) target[key] = value;
+            const write = (key, value) => {
+                const trimmed = value ? String(value).trim() : "";
+                if (!trimmed) return;
+                if (mode === "overwrite" || !p[key] || !String(p[key]).trim()) p[key] = trimmed;
             };
 
             if (mode === "overwrite" || !activityData.name.trim()) activityData.name = draft.name;
-            write(po, "theme", draft.theme);
-            write(po, "objective", draft.objective);
-            write(po, "dateYear", draft.dateYear);
-            write(po, "dateMonth", draft.dateMonth);
-            write(po, "dateDay", draft.dateDay);
-            write(po, "targetAudience", draft.targetAudience);
-            write(po, "countPerSession", draft.countPerSession);
-            write(po, "sessions", draft.sessions);
-            write(p, "purpose", draft.purpose);
-            write(p, "contentFlow", draft.contentFlow);
-            write(p, "requirements", draft.requirements);
-            write(p, "execution", draft.execution);
-            write(p, "riskPlan", draft.riskPlan);
-            activityData.planContent = `${draft.purpose}\n\n${draft.contentFlow}`;
+            write("theme", draft.theme);
+            write("objective", draft.objective);
+            write("dateTime", draft.dateTime);
+            write("location", draft.location);
+            write("targetAudience", draft.targetAudience);
+            write("targetCount", draft.targetCount);
+
+            // 结构化表格：AI 行数组 → 填入；空白表格时才写（非覆盖模式）
+            const execRows = getAiExecPlanRows(draft).filter(r => (r.time || "").trim() || (r.name || "").trim() || (r.description || "").trim());
+            if (execRows.length) {
+                if (mode === "overwrite" || !(p.executionPlan || []).some(r => (r.time || "").trim() || (r.name || "").trim())) {
+                    p.executionPlan = execRows;
+                }
+            }
+            const emRows = getAiEmergencyRows(draft).filter(r => (r.response || "").trim());
+            if (emRows.length) {
+                if (mode === "overwrite" || !(p.emergencyPlan || []).some(r => (r.response || "").trim())) {
+                    p.emergencyPlan = emRows;
+                }
+            }
+
+            activityData.planContent = [draft.objective, draft.targetAudience ? `面向对象：${draft.targetAudience}` : "", draft.dateTime ? `活动时间：${draft.dateTime}` : ""].filter(Boolean).join("\n");
 
             saveActivityData();
             renderAll();
@@ -2799,6 +3649,40 @@
                     if (el) el.scrollTop = el.scrollHeight;
                 });
             }, 0);
+        }
+
+        // ── 旧版本数据迁移：六部分 planOverview → 新十个部分结构 ──
+        function migrateLegacyPlanSections(p) {
+            if (!p) return;
+            const legacy = p.planOverview;
+            if (!legacy || p.theme) return; // 无旧数据或已是新结构
+            p.theme = p.theme || legacy.theme || "";
+            p.objective = p.objective || legacy.objective || "";
+            if (legacy.dateYear || legacy.dateMonth || legacy.dateDay) {
+                p.dateTime = p.dateTime || [legacy.dateYear, legacy.dateMonth, legacy.dateDay].filter(Boolean).join("-");
+            }
+            p.targetAudience = p.targetAudience || legacy.targetAudience || "";
+            const legacyCount = legacy.countPerSession
+                ? (Number(legacy.countPerSession) || 0) * (Number(legacy.sessions) || 1)
+                : 0;
+            p.targetCount = p.targetCount || (legacyCount ? String(legacyCount) : legacy.countPerSession) || "";
+            if (!p.executionPlan || !p.executionPlan.length) {
+                p.executionPlan = [{ time: "", name: "", format: "", description: p.execution || "" }];
+            }
+            if (!p.emergencyPlan || !p.emergencyPlan.length) {
+                p.emergencyPlan = parseRiskPlanText(p.riskPlan);
+            }
+        }
+
+        // ── 旧版本预算行 {item, cost} → 新行结构 ──
+        function migrateLegacyBudget(budget) {
+            if (!Array.isArray(budget)) return [];
+            return budget.map(b => {
+                if (b && typeof b === "object" && "name" in b) return b;
+                const item = (b && (b.item || b.name)) || "";
+                const cost = b ? String(b.cost || b.amount || "") : "";
+                return { name: item, unitPrice: cost, unit: "", quantity: "1", reusable: "否", purpose: "", purchaseLink: "" };
+            });
         }
 
         // ── Init: Load saved activity data ──
@@ -2829,16 +3713,23 @@
                         // Load any previously saved workflow data
                         if (data.aiPlan) activityData.aiPlan = data.aiPlan;
                         if (data.planContent) activityData.planContent = data.planContent;
-                        if (data.planSections) activityData.planSections = data.planSections;
-                        if (data.budget) activityData.budget = data.budget;
-                        if (data.approved) activityData.approved = data.approved;
+                        if (data.planSections) {
+                            activityData.planSections = data.planSections;
+                            migrateLegacyPlanSections(activityData.planSections);
+                        }
+                        if (data.budget) activityData.budget = migrateLegacyBudget(data.budget);
                         if (data.checklist) activityData.checklist = data.checklist;
-                        if (data.progressItems) activityData.progressItems = data.progressItems;
-                        if (data.progressStatus) activityData.progressStatus = data.progressStatus;
+                        if (data.purchaseList) activityData.purchaseList = data.purchaseList;
+                        if (data.organizationName !== undefined) activityData.organizationName = data.organizationName;
+                        if (data.activityLeader !== undefined) activityData.activityLeader = data.activityLeader;
+                        if (data.financePerson !== undefined) activityData.financePerson = data.financePerson;
+                        if (data.approvalDate !== undefined) activityData.approvalDate = data.approvalDate;
+                        if (data.approvalOpinion !== undefined) activityData.approvalOpinion = data.approvalOpinion;
+                        if (data.approvalActivityLeader !== undefined) activityData.approvalActivityLeader = data.approvalActivityLeader;
+                        if (data.approved !== undefined) activityData.approved = data.approved;
+                        if (data.uploads) activityData.uploads = data.uploads;
                         if (data.reflection) activityData.reflection = data.reflection;
                         if (data.rating) activityData.rating = data.rating;
-                        if (data.archivedItems) activityData.archivedItems = data.archivedItems;
-                        if (data.badgeEarned) activityData.badgeEarned = data.badgeEarned;
                         if (data.aiAssistant) {
                             activityData.aiAssistant = {
                                 ...activityData.aiAssistant,
