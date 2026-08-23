@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGrowthStore } from '../../stores/growth'
 import { useWorkspaceBridge } from '../../composables/useWorkspaceBridge'
@@ -8,6 +9,32 @@ const router = useRouter()
 const store = useGrowthStore()
 
 const { pending, startReflection, postpone } = useWorkspaceBridge()
+
+// ---------- 未完成草稿（工作台内保存到 localStorage.editActivity） ----------
+const DRAFT_KEY = 'editActivity'
+const draft = ref<{ id: string; title: string } | null>(null)
+
+onMounted(() => {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY)
+    if (raw) {
+      const d = JSON.parse(raw)
+      if (d && d.id && d.title) draft.value = { id: d.id, title: d.title }
+    }
+  } catch {
+    /* 解析失败则当作没有草稿 */
+  }
+})
+
+function continueDraft() {
+  if (!draft.value) return
+  router.push({ path: '/workspace/create', query: { id: draft.value.id } })
+}
+
+function discardDraft() {
+  localStorage.removeItem(DRAFT_KEY)
+  draft.value = null
+}
 
 function fmtDate(iso: string): string {
   const d = new Date(iso)
@@ -30,6 +57,21 @@ function fmtDate(iso: string): string {
       <button class="btn btn-primary new-btn" @click="router.push('/workspace/create')">
         ＋ 新建活动
       </button>
+    </div>
+
+    <!-- 未完成草稿 -->
+    <div v-if="draft" class="draft-card card">
+      <div class="draft-info">
+        <div class="draft-emoji">📝</div>
+        <div class="draft-text">
+          <div class="draft-title">{{ draft.title }}</div>
+          <div class="draft-sub">未完成 · 上次编辑到一半</div>
+        </div>
+      </div>
+      <div class="draft-actions">
+        <button class="btn btn-primary draft-continue" @click="continueDraft">继续编辑 →</button>
+        <button class="btn btn-ghost" @click="discardDraft">丢弃</button>
+      </div>
     </div>
 
     <!-- 活动列表 -->
@@ -105,6 +147,59 @@ function fmtDate(iso: string): string {
 .new-btn {
   flex-shrink: 0;
   padding: 12px 24px;
+}
+
+/* ---------- 草稿卡 ---------- */
+.draft-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border: 2px dashed var(--primary-light);
+  background: #fbfcff;
+}
+
+.draft-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.draft-emoji {
+  font-size: 26px;
+}
+
+.draft-text {
+  min-width: 0;
+}
+
+.draft-title {
+  font-size: 15px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.draft-sub {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.draft-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.draft-continue {
+  padding: 8px 16px;
+  font-size: 14px;
 }
 
 /* ---------- 活动列表 ---------- */

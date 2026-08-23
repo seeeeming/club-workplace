@@ -3,12 +3,13 @@ import { useRouter } from 'vue-router'
 import { useGrowthStore } from '../stores/growth'
 
 /**
- * 同学工作台（public/workspace.html，通过 iframe 嵌入）与父窗口之间的桥接。
+ * 同学工作台（public/ai/create.html，通过 iframe 嵌入）与父窗口之间的桥接。
  * - activity-completed：活动完成 → 记录到 store，并弹「要不要复盘」询问
  * - open-reflection：同学侧栏 🪞 复盘入口 → 跳最近未复盘的活动
+ * - back-workspace：工作台内部「←」返回 → 统一回到平台工作台
  */
 interface WorkspaceMessage {
-  type: 'activity-completed' | 'open-reflection'
+  type: 'activity-completed' | 'open-reflection' | 'back-workspace'
   title?: string
   photo?: string
 }
@@ -40,6 +41,9 @@ export function useWorkspaceBridge() {
       } else {
         alert('还没有需要复盘的活动')
       }
+    } else if (data.type === 'back-workspace') {
+      // 工作台内部「←」：统一返回平台工作台
+      router.push('/platform/workspace')
     }
   }
 

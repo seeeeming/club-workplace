@@ -1097,7 +1097,7 @@
 <body>
     <!-- ── Header ── -->
     <header class="header">
-        <a href="index.html" class="back-btn" title="返回活动列表">←</a>
+        <a href="#" class="back-btn" title="返回工作台" onclick="goBackToWorkspace(event)">←</a>
         <h1 id="headerTitle" onclick="editTitleInline()" style="cursor:pointer;" title="点击编辑活动名称">未命名活动</h1>
         <span class="step-indicator">步骤 <strong id="currentStepNum">1</strong> / 6</span>
         <button class="btn btn-outline btn-sm" onclick="saveDraft()" title="保存当前进度">💾 保存草稿</button>
@@ -1452,6 +1452,10 @@
                 }, '*');
             }
             saveActivityData();
+            // 全部步骤完成：清掉草稿，避免工作台出现「已完成活动」的过期草稿
+            if (index === steps.length - 1) {
+                localStorage.removeItem("editActivity");
+            }
             if (index < steps.length - 1) {
                 const next = index + 1;
                 if (canAccessStep(next)) {
@@ -1481,6 +1485,7 @@
             content.innerHTML = `<div class="content-panel">${steps[currentStep].render()}</div>`;
             updateHeaderTitle();
             renderAiAssistant();
+            updateReflectionNav();
         }
 
         function updateHeaderTitle() {
@@ -1524,10 +1529,32 @@
         }
 
         function goToReflection() {
+            // 复盘前提：活动必须已走完全部步骤（完成）
+            if (!completedSteps.has(steps.length - 1)) {
+                showToast("完成活动全部步骤后才能开始复盘哦");
+                return;
+            }
             // Reflection 复盘由父窗口（Vue 平台的复盘流程：评分/AI 提炼/成长等级）接管
             if (window.parent) {
                 window.parent.postMessage({ type: 'open-reflection' }, '*');
             }
+        }
+
+        function goBackToWorkspace(e) {
+            if (e) e.preventDefault();
+            // 统一返回平台工作台（与 Vue 悬浮返回按钮同一个去处，避免出现两个不同的"工作台"）
+            if (window.parent) {
+                window.parent.postMessage({ type: 'back-workspace' }, '*');
+            } else {
+                window.location.href = '/platform/workspace';
+            }
+        }
+
+        // 复盘入口：未完成时置灰提示
+        function updateReflectionNav() {
+            const nav = document.getElementById("reflectionNav");
+            if (!nav) return;
+            nav.classList.toggle("locked", !completedSteps.has(steps.length - 1));
         }
 
         function showToast(msg) {

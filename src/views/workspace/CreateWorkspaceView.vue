@@ -1,16 +1,24 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useWorkspaceBridge } from '../../composables/useWorkspaceBridge'
 
 const router = useRouter()
+const route = useRoute()
 
 const { pending, startReflection, postpone } = useWorkspaceBridge()
+
+// 若从工作台草稿卡「继续编辑」进来，带上 ?id=，create.html 会恢复草稿
+const frameSrc = computed(() => {
+  const id = route.query.id
+  return id ? `/ai/create.html?id=${id}` : '/ai/create.html'
+})
 </script>
 
 <template>
   <div class="create-fullscreen">
     <!-- 同学完整版工作台（AI+club create.html，含 AI 策划助手）：占满整个窗口 -->
-    <iframe class="workspace-frame" src="/ai/create.html" title="新建活动 · 社团工作台" />
+    <iframe class="workspace-frame" :src="frameSrc" title="新建活动 · 社团工作台" />
 
     <!-- 浮动返回按钮（悬浮在 iframe 之上） -->
     <button class="floating-back" @click="router.push('/platform/workspace')">← 返回工作台</button>
