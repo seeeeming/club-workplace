@@ -1385,10 +1385,13 @@
             const id = ensureActivityId();
             if (id) {
                 const existing = JSON.parse(localStorage.getItem("editActivity") || "{}");
+                // 只有同一份草稿（id 相同）才合并旧字段；新活动从空白开始，避免把上一份草稿内容带进来
+                const base = existing && existing.id === id ? existing : {};
                 const aiSnapshot = getSerializableAiAssistant();
                 const data = {
-                    ...existing,
+                    ...base,
                     ...activityData,
+                    id: id,
                     aiAssistant: aiSnapshot,
                     title: activityData.name,
                     desc: activityData.planContent,

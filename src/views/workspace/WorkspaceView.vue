@@ -19,7 +19,7 @@ onMounted(() => {
     const raw = localStorage.getItem(DRAFT_KEY)
     if (raw) {
       const d = JSON.parse(raw)
-      if (d && d.id && d.title) draft.value = { id: d.id, title: d.title }
+      if (d && d.id) draft.value = { id: d.id, title: d.title || '' }
     }
   } catch {
     /* 解析失败则当作没有草稿 */
@@ -52,58 +52,76 @@ function fmtDate(iso: string): string {
     <div class="head-row">
       <div>
         <h1 class="page-title">社团工作台</h1>
-        <p class="page-subtitle">策划与执行社团活动，走完 8 步流程，完成后做一次复盘</p>
+        <p class="page-subtitle">策划与执行社团活动，草稿自动保存，完成后可复盘</p>
       </div>
       <button class="btn btn-primary new-btn" @click="router.push('/workspace/create')">
         ＋ 新建活动
       </button>
     </div>
 
-    <!-- 未完成草稿 -->
-    <div v-if="draft" class="draft-card card">
-      <div class="draft-info">
-        <div class="draft-emoji">📝</div>
-        <div class="draft-text">
-          <div class="draft-title">{{ draft.title }}</div>
-          <div class="draft-sub">未完成 · 上次编辑到一半</div>
-        </div>
-      </div>
-      <div class="draft-actions">
-        <button class="btn btn-primary draft-continue" @click="continueDraft">继续编辑 →</button>
-        <button class="btn btn-ghost" @click="discardDraft">丢弃</button>
-      </div>
+    <!-- 状态统计 -->
+    <div class="stats-row">
+      <span class="stat-item">
+        <span class="stat-dot in-progress"></span>进行中 <strong>{{ draft ? 1 : 0 }}</strong>
+      </span>
+      <span class="stat-item">
+        <span class="stat-dot done"></span>已完成 <strong>{{ store.activities.length }}</strong>
+      </span>
     </div>
 
-    <!-- 活动列表 -->
-    <div v-if="store.activities.length" class="activity-list">
-      <div v-for="activity in store.activities" :key="activity.id" class="activity-item card">
-        <div class="thumb" :class="{ placeholder: !activity.photo }">
-          <img v-if="activity.photo" :src="activity.photo" alt="" />
-          <span v-else>🗂️</span>
+    <!-- 正在进行（草稿） -->
+    <div class="section">
+      <div class="section-title">📝 正在进行</div>
+      <div v-if="draft" class="draft-card card">
+        <div class="draft-info">
+          <div class="draft-emoji">📝</div>
+          <div class="draft-text">
+            <div class="draft-title">{{ draft.title || '未命名活动' }}</div>
+            <div class="draft-sub">
+              <span class="badge draft-badge">草稿</span>
+              <span class="draft-note">上次编辑到一半，点「继续编辑」接着写</span>
+            </div>
+          </div>
         </div>
-        <div class="activity-info">
-          <div class="activity-title">{{ activity.title }}</div>
-          <div class="activity-meta">{{ fmtDate(activity.completedAt) }} · 活动完成</div>
+        <div class="draft-actions">
+          <button class="btn btn-primary draft-continue" @click="continueDraft">继续编辑 →</button>
+          <button class="btn btn-ghost" @click="discardDraft">丢弃</button>
         </div>
-        <div class="activity-action">
-          <template v-if="activity.reflected">
-            <span class="badge done-badge">✓ 已复盘</span>
-          </template>
-          <template v-else>
-            <button class="btn btn-primary reflect-btn" @click="router.push(`/reflection/${activity.id}`)">
-              去复盘 →
-            </button>
-          </template>
-        </div>
-        <DeleteActivityButton :activity="activity" />
       </div>
+      <div v-else class="section-empty">还没有正在进行的活动</div>
     </div>
 
-    <!-- 空态 -->
-    <div v-else class="empty-state card">
-      <div class="empty-emoji">🗂️</div>
-      <p class="empty-title">还没有活动</p>
-      <p class="empty-tip">点击「＋ 新建活动」，开始策划你的第一场社团活动</p>
+    <!-- 已完成 -->
+    <div class="section">
+      <div class="section-title">✅ 已完成</div>
+      <div v-if="store.activities.length" class="activity-list">
+        <div v-for="activity in store.activities" :key="activity.id" class="activity-item card">
+          <div class="thumb" :class="{ placeholder: !activity.photo }">
+            <img v-if="activity.photo" :src="activity.photo" alt="" />
+            <span v-else>🗂️</span>
+          </div>
+          <div class="activity-info">
+            <div class="activity-title">{{ activity.title }}</div>
+            <div class="activity-meta">{{ fmtDate(activity.completedAt) }} · 活动完成</div>
+          </div>
+          <div class="activity-action">
+            <template v-if="activity.reflected">
+              <span class="badge done-badge">✓ 已复盘</span>
+            </template>
+            <template v-else>
+              <button class="btn btn-primary reflect-btn" @click="router.push(`/reflection/${activity.id}`)">
+                去复盘 →
+              </button>
+            </template>
+          </div>
+          <DeleteActivityButton :activity="activity" />
+        </div>
+      </div>
+      <div v-else class="empty-state card">
+        <div class="empty-emoji">🗂️</div>
+        <p class="empty-title">还没有已完成的活动</p>
+        <p class="empty-tip">点击「＋ 新建活动」，开始策划你的第一场社团活动</p>
+      </div>
     </div>
 
     <!-- 复盘询问弹窗 -->
@@ -147,6 +165,61 @@ function fmtDate(iso: string): string {
 .new-btn {
   flex-shrink: 0;
   padding: 12px 24px;
+}
+
+/* ---------- 状态统计 ---------- */
+.stats-row {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.stat-item strong {
+  color: var(--text);
+  font-size: 16px;
+}
+
+.stat-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.stat-dot.in-progress {
+  background: #f59e0b;
+}
+
+.stat-dot.done {
+  background: #10b981;
+}
+
+/* ---------- 分区 ---------- */
+.section {
+  margin-bottom: 22px;
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.section-empty {
+  padding: 22px 18px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  text-align: center;
 }
 
 /* ---------- 草稿卡 ---------- */
@@ -200,6 +273,17 @@ function fmtDate(iso: string): string {
 .draft-continue {
   padding: 8px 16px;
   font-size: 14px;
+}
+
+.draft-note {
+  margin-left: 6px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.draft-badge {
+  background: #fff7ed;
+  color: #b45309;
 }
 
 /* ---------- 活动列表 ---------- */
