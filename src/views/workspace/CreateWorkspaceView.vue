@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useWorkspaceBridge } from '../../composables/useWorkspaceBridge'
 
-const router = useRouter()
 const route = useRoute()
 
 const { pending, startReflection, postpone } = useWorkspaceBridge()
@@ -19,9 +18,6 @@ const frameSrc = computed(() => {
   <div class="create-fullscreen">
     <!-- 同学完整版工作台（AI+club create.html，含 AI 策划助手）：占满整个窗口 -->
     <iframe class="workspace-frame" :src="frameSrc" title="新建活动 · 社团工作台" />
-
-    <!-- 浮动返回按钮（悬浮在 iframe 之上） -->
-    <button class="floating-back" @click="router.push('/platform/workspace')">← 返回工作台</button>
 
     <!-- 复盘询问弹窗 -->
     <Teleport to="body">
@@ -52,27 +48,6 @@ const frameSrc = computed(() => {
   width: 100%;
   height: 100%;
   border: none;
-}
-
-.floating-back {
-  position: fixed;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 300;
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid var(--border);
-  box-shadow: 0 2px 10px rgba(31, 36, 48, 0.12);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.floating-back:hover {
-  background: #fff;
-  color: var(--primary);
 }
 
 /* ---------- 弹窗 ---------- */

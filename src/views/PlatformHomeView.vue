@@ -10,7 +10,7 @@ const entries = [
     name: '社团工作台',
     path: '/platform/workspace',
     icon: '🗂️',
-    desc: '策划与执行社团活动，走完 8 步流程，沉淀每次活动的复盘经验',
+    desc: '策划与执行社团活动，走完 6 步流程，沉淀每次活动的复盘经验',
   },
   {
     name: '社团资料库',

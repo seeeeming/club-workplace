@@ -52,7 +52,7 @@ function fmtDate(iso: string): string {
     <div class="head-row">
       <div>
         <h1 class="page-title">社团工作台</h1>
-        <p class="page-subtitle">策划与执行社团活动，草稿自动保存，完成后可复盘</p>
+        <p class="page-subtitle">策划与执行社团活动，走完 6 步流程，完成后可复盘</p>
       </div>
       <button class="btn btn-primary new-btn" @click="router.push('/workspace/create')">
         ＋ 新建活动
