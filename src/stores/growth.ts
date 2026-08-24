@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import type {
   Activity,
   ActivityRating,
+  ActivityStatus,
   GrowthStats,
   KnowledgeItem,
   KnowledgeType,
@@ -62,6 +63,17 @@ function loadState(): PersistedState {
         })),
       }
     })
+    // 旧版本数据结构兼容：老 activities 用 reflected 布尔而非 status
+    const now = new Date().toISOString()
+    merged.activities = (merged.activities ?? []).map((a) => {
+      const legacy = a as Activity & { reflected?: boolean }
+      if (legacy.status) return legacy
+      return {
+        ...legacy,
+        createdAt: legacy.createdAt ?? legacy.completedAt ?? now,
+        status: legacy.reflected ? ('completed' as const) : ('pendingReflection' as const),
+      }
+    })
     return merged
   } catch {
     return defaultState()
@@ -111,16 +123,65 @@ export const useGrowthStore = defineStore('growth', () => {
   }
 
   // ---------- 活动 ----------
-  function completeActivity(title: string, photo?: string): Activity {
-    const activity: Activity = {
-      id: makeId('act'),
-      title,
-      photo,
-      completedAt: new Date().toISOString(),
-      reflected: false,
+  /** 活动排序：最近编辑 / 完成的排最前（草稿按 createdAt，完成后按 completedAt） */
+  function sortActivities() {
+    state.value.activities.sort((a, b) => {
+      const ta = a.completedAt ?? a.createdAt
+      const tb = b.completedAt ?? b.createdAt
+      return tb.localeCompare(ta)
+    })
+  }
+
+  /**
+   * 创建或更新一条活动记录（草稿 / 进行中 / 待复盘 / 已完成）。
+   * create.html 通过 postMessage 上报的状态变化都汇聚到这里，按 id 去重，
+   * 保证「保存草稿 → 继续编辑 → 走完流程」是同一条记录，不会重复。
+   */
+  function upsertActivity(input: {
+    id: string
+    title: string
+    status: ActivityStatus
+    photo?: string
+  }): Activity {
+    const now = new Date().toISOString()
+    const title = input.title?.trim() || '未命名活动'
+    const isCompletedFlow = input.status === 'pendingReflection' || input.status === 'completed'
+
+    const existing = state.value.activities.find((a) => a.id === input.id)
+    if (existing) {
+      const wasCompletedFlow =
+        existing.status === 'pendingReflection' || existing.status === 'completed'
+      existing.title = title
+      if (input.photo) existing.photo = input.photo
+      existing.status = input.status
+      // 草稿 / 进行中阶段每次保存都刷新时间（代表最近编辑时间）
+      if (input.status === 'draft' || input.status === 'inProgress') {
+        existing.createdAt = now
+      }
+      if (isCompletedFlow && !existing.completedAt) {
+        existing.completedAt = now
+        state.value.stats.completedActivities += 1
+      } else if (!isCompletedFlow && wasCompletedFlow) {
+        // 状态回退（极少发生）：撤销完成统计
+        existing.completedAt = undefined
+        state.value.stats.completedActivities = Math.max(0, state.value.stats.completedActivities - 1)
+      }
+      sortActivities()
+      persist()
+      return existing
     }
-    state.value.activities.unshift(activity)
-    state.value.stats.completedActivities += 1
+
+    const activity: Activity = {
+      id: input.id,
+      title,
+      photo: input.photo,
+      createdAt: now,
+      completedAt: isCompletedFlow ? now : undefined,
+      status: input.status,
+    }
+    state.value.activities.push(activity)
+    if (isCompletedFlow) state.value.stats.completedActivities += 1
+    sortActivities()
     persist()
     return activity
   }
@@ -133,6 +194,10 @@ export const useGrowthStore = defineStore('growth', () => {
   function deleteActivity(id: string) {
     const idx = state.value.activities.findIndex((a) => a.id === id)
     if (idx === -1) return
+
+    const activity = state.value.activities[idx]
+    const wasCompletedFlow =
+      activity.status === 'pendingReflection' || activity.status === 'completed'
 
     const related = state.value.reflections.filter((r) => r.activityId === id)
     const knowledgeIds = new Set(related.flatMap((r) => r.knowledgeIds))
@@ -147,7 +212,9 @@ export const useGrowthStore = defineStore('growth', () => {
     state.value.reflections = state.value.reflections.filter((r) => r.activityId !== id)
     state.value.knowledge = state.value.knowledge.filter((k) => !knowledgeIds.has(k.id))
 
-    state.value.stats.completedActivities = Math.max(0, state.value.stats.completedActivities - 1)
+    if (wasCompletedFlow) {
+      state.value.stats.completedActivities = Math.max(0, state.value.stats.completedActivities - 1)
+    }
     state.value.stats.reflections = Math.max(0, state.value.stats.reflections - related.length)
     state.value.stats.experiences = Math.max(0, state.value.stats.experiences - removedExperiences)
     state.value.stats.risks = Math.max(0, state.value.stats.risks - removedRisks)
@@ -192,7 +259,7 @@ export const useGrowthStore = defineStore('growth', () => {
     state.value.stats.risks += knowledgeItems.filter((k) => k.type === 'risk').length
 
     const activity = state.value.activities.find((a) => a.id === params.activityId)
-    if (activity) activity.reflected = true
+    if (activity) activity.status = 'completed'
 
     persist()
 
@@ -229,7 +296,7 @@ export const useGrowthStore = defineStore('growth', () => {
     demoReflections: computed(() => state.value.demoReflections),
     login,
     logout,
-    completeActivity,
+    upsertActivity,
     getActivity,
     deleteActivity,
     saveReflection,

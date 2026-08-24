@@ -2,17 +2,25 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGrowthStore } from '../stores/growth'
 import { getActivityLevel } from '../data/growth'
+import type { ActivityStatus } from '../types'
 
 /**
  * 同学工作台（public/ai/create.html，通过 iframe 嵌入）与父窗口之间的桥接。
- * - activity-completed：活动完成 → 记录到 store，并弹「要不要复盘」询问
- * - open-reflection：同学侧栏 🪞 复盘入口 → 跳最近未复盘的活动
- * - back-workspace：工作台内部「←」返回 → 统一回到平台工作台
+ * - activity-completed：走完 6 步流程 → 记录为「待复盘」，并弹「要不要复盘」询问
+ * - activity-save：保存草稿 / 流程进行中 → 同步「草稿」「进行中」状态
+ * - open-reflection：同学侧栏 🪞 复盘入口 → 跳最近待复盘的活动
  */
 interface WorkspaceMessage {
-  type: 'activity-completed' | 'open-reflection' | 'back-workspace'
+  type: 'activity-completed' | 'activity-save' | 'open-reflection'
+  id?: string
   title?: string
   photo?: string
+  status?: ActivityStatus
+}
+
+/** 兜底 id（正常情况下 create.html 会带上活动 id，用于按 id 去重） */
+function fallbackId(): string {
+  return `act-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 }
 
 export function useWorkspaceBridge() {
@@ -32,24 +40,34 @@ export function useWorkspaceBridge() {
     if (e.origin !== window.location.origin) return
 
     if (data.type === 'activity-completed') {
-      // 活动完成：记录到 store（照片必传，由工作台保证）
-      const activity = store.completeActivity(data.title?.trim() || '未命名活动', data.photo)
+      // 走完流程：按 id 写入「待复盘」（照片必传，由工作台保证）
+      const activity = store.upsertActivity({
+        id: data.id || fallbackId(),
+        title: data.title || '',
+        status: 'pendingReflection',
+        photo: data.photo,
+      })
       pending.value = {
         id: activity.id,
         title: activity.title,
         level: getActivityLevel(store.stats.completedActivities),
       }
+    } else if (data.type === 'activity-save') {
+      // 保存草稿 / 流程进行中：同步「草稿」「进行中」
+      store.upsertActivity({
+        id: data.id || fallbackId(),
+        title: data.title || '',
+        status: data.status || 'draft',
+        photo: data.photo,
+      })
     } else if (data.type === 'open-reflection') {
-      // 主动进入复盘：找最近一个未复盘的活动
-      const unreflected = store.activities.find((a) => !a.reflected)
-      if (unreflected) {
-        router.push(`/reflection/${unreflected.id}`)
+      // 主动进入复盘：找最近一个待复盘的活动
+      const target = store.activities.find((a) => a.status === 'pendingReflection')
+      if (target) {
+        router.push(`/reflection/${target.id}`)
       } else {
         alert('还没有需要复盘的活动')
       }
-    } else if (data.type === 'back-workspace') {
-      // 工作台内部「←」：统一返回平台工作台
-      router.push('/platform/workspace')
     }
   }
 

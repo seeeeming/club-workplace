@@ -15,15 +15,21 @@ export interface KnowledgeItem {
   createdAt: string
 }
 
+/** 活动状态：草稿 → 进行中 → 待复盘 → 已完成 */
+export type ActivityStatus = 'draft' | 'inProgress' | 'pendingReflection' | 'completed'
+
 /** 一次活动 */
 export interface Activity {
   id: string
   title: string
   /** 活动照片（base64 或 object URL） */
   photo?: string
-  completedAt: string
-  /** 是否已做复盘 */
-  reflected: boolean
+  /** 创建时间（草稿 / 进行中阶段在每次保存时刷新为最近编辑时间） */
+  createdAt: string
+  /** 走完 6 步流程的时间（草稿 / 进行中阶段没有） */
+  completedAt?: string
+  /** 当前状态 */
+  status: ActivityStatus
 }
 
 /**

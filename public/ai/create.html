@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>新建活动 - 活动工作台</title>
+    <title>新建活动 - 社团工作台</title>
     <style>
         :root {
             --bg: #f5f6fa;
@@ -391,6 +391,37 @@
             padding: 6px 14px;
             font-size: 13px;
             border-radius: 6px;
+        }
+
+        .btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* ── 已完成步骤锁定 ── */
+        .locked-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            background: #fff7ed;
+            color: #d97706;
+            font-size: 13px;
+        }
+
+        .locked-fieldset {
+            border: none;
+            margin: 0;
+            padding: 0;
+            min-inline-size: 0;
+        }
+
+        .locked-fieldset[disabled] {
+            opacity: 0.85;
         }
 
         .btn-group {
@@ -1393,7 +1424,6 @@
 <body>
     <!-- ── Header ── -->
     <header class="header">
-        <a href="#" class="back-btn" title="返回工作台" onclick="goBackToWorkspace(event)">←</a>
         <h1 id="headerTitle" onclick="editTitleInline()" style="cursor:pointer;" title="点击编辑活动名称">未命名活动</h1>
         <span class="step-indicator">步骤 <strong id="currentStepNum">1</strong> / 6</span>
         <button class="btn btn-outline btn-sm" onclick="saveDraft()" title="保存当前进度">💾 保存草稿</button>
@@ -1629,9 +1659,12 @@
                         activityData.budget.some(b => (b.name || "").trim() && (parseFloat(b.unitPrice) || 0) > 0));
                 case 2: // 审批流程或导出文件 — 导出文件后即完成
                     return true;
-                case 3: // 采购清单 — 至少一项物品名称已填写
+                case 3: // 采购清单 — 至少一项物品，且所有已填物品均已到货并填写放置位置
                     return activityData.purchaseList && activityData.purchaseList.length > 0
-                        && activityData.purchaseList.some(r => (r.name || "").trim());
+                        && activityData.purchaseList.some(r => (r.name || "").trim())
+                        && activityData.purchaseList
+                            .filter(r => (r.name || "").trim())
+                            .every(r => r.status === '已到货' && (r.location || "").trim());
                 case 4: // 活动资料上传
                     return activityData.uploads && activityData.uploads.length > 0;
                 case 5: // 活动完成
@@ -1676,8 +1709,9 @@
         }
 
         function saveDraft() {
-            ensureActivityId();
+            const id = ensureActivityId();
             saveActivityData();
+            notifyStatus(id);
             showToast("💾 草稿已保存");
         }
 
@@ -1685,12 +1719,12 @@
         function saveActivityData() {
             const id = ensureActivityId();
             if (id) {
-                const existing = JSON.parse(localStorage.getItem("editActivity") || "{}");
-                // 只有同一份草稿（id 相同）才合并旧字段；新活动从空白开始，避免把上一份草稿内容带进来
-                const base = existing && existing.id === id ? existing : {};
+                // 每个活动独立存储，按 id 分键，互不覆盖（多个草稿互不影响）
+                const key = "editActivity:" + id;
+                const existing = JSON.parse(localStorage.getItem(key) || "{}");
                 const aiSnapshot = getSerializableAiAssistant();
                 const data = {
-                    ...base,
+                    ...existing,
                     ...activityData,
                     id: id,
                     aiAssistant: aiSnapshot,
@@ -1698,10 +1732,30 @@
                     desc: activityData.planContent,
                     completedSteps: Array.from(completedSteps)
                 };
-                localStorage.setItem("editActivity", JSON.stringify(data));
+                localStorage.setItem(key, JSON.stringify(data));
                 saveAiAssistantHistory(id);
                 saveAiAssistantAccountHistory();
             }
+        }
+
+        // ── 把当前状态同步给父窗口（Vue 平台）：草稿 / 进行中 ──
+        function currentStatusLabel() {
+            const done = completedSteps.size;
+            const total = steps.length;
+            if (done === 0) return 'draft';
+            if (done < total) return 'inProgress';
+            return 'pendingReflection';
+        }
+
+        function notifyStatus(id) {
+            if (!window.parent) return;
+            window.parent.postMessage({
+                type: 'activity-save',
+                id: id,
+                title: activityData.name,
+                status: currentStatusLabel(),
+                photo: (activityData.uploads && activityData.uploads.length) ? activityData.uploads[0].dataUrl : ''
+            }, '*');
         }
 
         function getCurrentActivityId() {
@@ -1747,20 +1801,26 @@
                 showToast("⚠️ 请填写当前步骤的所有必填内容后再完成");
                 return;
             }
+            if (!confirm(`确认完成「${steps[index].title}」？完成后该步骤内容将不可修改。`)) {
+                return;
+            }
             completedSteps.add(index);
+            const id = ensureActivityId();
             // 活动完成（第 6 步）→ 通知父窗口（Vue 平台）记录活动并询问是否复盘
-            if (index === 5 && window.parent) {
-                window.parent.postMessage({
-                    type: 'activity-completed',
-                    title: activityData.name,
-                    photo: (activityData.uploads && activityData.uploads.length) ? activityData.uploads[0].dataUrl : ''
-                }, '*');
+            if (index === 5) {
+                if (window.parent) {
+                    window.parent.postMessage({
+                        type: 'activity-completed',
+                        id: id,
+                        title: activityData.name,
+                        photo: (activityData.uploads && activityData.uploads.length) ? activityData.uploads[0].dataUrl : ''
+                    }, '*');
+                }
+            } else {
+                // 流程进行中 → 同步「进行中」状态到父窗口
+                notifyStatus(id);
             }
             saveActivityData();
-            // 全部步骤完成：清掉草稿，避免工作台出现「已完成活动」的过期草稿
-            if (index === steps.length - 1) {
-                localStorage.removeItem("editActivity");
-            }
             if (index < steps.length - 1) {
                 const next = index + 1;
                 if (canAccessStep(next)) {
@@ -1787,10 +1847,23 @@
         function renderAll() {
             renderSidebar();
             const content = document.getElementById("mainContent");
-            content.innerHTML = `<div class="content-panel">${steps[currentStep].render()}</div>`;
+            const done = completedSteps.has(currentStep);
+            if (done) {
+                const backBtn = currentStep > 0
+                    ? `<button class="btn btn-outline btn-sm" onclick="prevStep()">← 返回上一步</button>`
+                    : '';
+                content.innerHTML = `<div class="content-panel">
+                    <div class="locked-banner">
+                        <span>🔒 本步骤已完成，内容已锁定，不可修改</span>
+                        ${backBtn}
+                    </div>
+                    <fieldset class="locked-fieldset" disabled>${steps[currentStep].render()}</fieldset>
+                </div>`;
+            } else {
+                content.innerHTML = `<div class="content-panel">${steps[currentStep].render()}</div>`;
+            }
             updateHeaderTitle();
             renderAiAssistant();
-            updateReflectionNav();
         }
 
         function updateHeaderTitle() {
@@ -1798,11 +1871,11 @@
             if (activityData.name.trim()) {
                 h.textContent = activityData.name.trim();
                 h.style.color = "";
-                document.title = activityData.name.trim() + " - 活动工作台";
+                document.title = activityData.name.trim() + " - 社团工作台";
             } else {
                 h.textContent = "未命名活动 — 点击命名";
                 h.style.color = "var(--text-secondary)";
-                document.title = "新建活动 - 活动工作台";
+                document.title = "新建活动 - 社团工作台";
             }
         }
 
@@ -1834,32 +1907,10 @@
         }
 
         function goToReflection() {
-            // 复盘前提：活动必须已走完全部步骤（完成）
-            if (!completedSteps.has(steps.length - 1)) {
-                showToast("完成活动全部步骤后才能开始复盘哦");
-                return;
-            }
             // Reflection 复盘由父窗口（Vue 平台的复盘流程：评分/AI 提炼/成长等级）接管
             if (window.parent) {
                 window.parent.postMessage({ type: 'open-reflection' }, '*');
             }
-        }
-
-        function goBackToWorkspace(e) {
-            if (e) e.preventDefault();
-            // 统一返回平台工作台（与 Vue 悬浮返回按钮同一个去处，避免出现两个不同的"工作台"）
-            if (window.parent) {
-                window.parent.postMessage({ type: 'back-workspace' }, '*');
-            } else {
-                window.location.href = '/platform/workspace';
-            }
-        }
-
-        // 复盘入口：未完成时置灰提示
-        function updateReflectionNav() {
-            const nav = document.getElementById("reflectionNav");
-            if (!nav) return;
-            nav.classList.toggle("locked", !completedSteps.has(steps.length - 1));
         }
 
         function showToast(msg) {
@@ -2808,6 +2859,53 @@
         // ═══════════════════════════════════════════════
         // STEP 4: 采购清单
         // ═══════════════════════════════════════════════
+        // ── 采购清单：确认按钮状态（全部到货 + 已填放置位置）──
+        function purchaseConfirmState(done) {
+            const items = (activityData.purchaseList || []).filter(r => (r.name || "").trim());
+            const pendingStatusCount = items.filter(r => r.status !== '已到货').length;
+            const missingLocationCount = items.filter(r => r.status === '已到货' && !(r.location || "").trim()).length;
+            const allReady = items.length > 0 && items.every(r => r.status === '已到货' && (r.location || "").trim());
+            let label;
+            if (done) label = '✓ 已完成';
+            else if (items.length === 0) label = '请先添加物资';
+            else if (pendingStatusCount > 0) label = `还有 ${pendingStatusCount} 项未到货`;
+            else if (missingLocationCount > 0) label = `还有 ${missingLocationCount} 项未填放置位置`;
+            else label = '确认采购清单 →';
+            return { allReady, label };
+        }
+
+        // 输入放置位置时原地更新按钮，不整页重渲染（避免闪屏/失焦）
+        function updateConfirmButton() {
+            const btn = document.getElementById("confirmPurchaseBtn");
+            if (!btn) return;
+            const done = completedSteps.has(3);
+            const { allReady, label } = purchaseConfirmState(done);
+            btn.textContent = label;
+            btn.disabled = !done && !allReady;
+        }
+
+        // 切换状态时原地更新：该行放置位置显隐 + 统计数字 + 确认按钮，不整页重渲染
+        function onPurchaseStatusChange(i, selectEl) {
+            activityData.purchaseList[i].status = selectEl.value;
+            const loc = document.getElementById("purchaseLoc-" + i);
+            if (loc) {
+                loc.style.display = (selectEl.value === '已到货') ? '' : 'none';
+            }
+            updatePurchaseStats();
+            updateConfirmButton();
+        }
+
+        function updatePurchaseStats() {
+            const counts = { '待采购': 0, '已下单': 0, '已到货': 0 };
+            (activityData.purchaseList || []).forEach(r => { if (counts[r.status] !== undefined) counts[r.status]++; });
+            const pending = document.getElementById("purchasePendingCount");
+            const ordered = document.getElementById("purchaseOrderedCount");
+            const arrived = document.getElementById("purchaseArrivedCount");
+            if (pending) pending.textContent = counts['待采购'];
+            if (ordered) ordered.textContent = counts['已下单'];
+            if (arrived) arrived.textContent = counts['已到货'];
+        }
+
         function renderStep4() {
             const done = completedSteps.has(3);
 
@@ -2835,6 +2933,9 @@
             activityData.purchaseList.forEach(r => { if (statusCounts[r.status] !== undefined) statusCounts[r.status]++; });
             const totalItems = activityData.purchaseList.length;
 
+            const { label: confirmLabel, allReady } = purchaseConfirmState(done);
+            const confirmDisabled = !done && !allReady;
+
             const escQ = (v) => esc(v || "");
 
             return `
@@ -2858,19 +2959,18 @@
                                 <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
                                     <input class="input" style="width:100%;padding:6px 8px;font-size:12px;" placeholder="物资名称"
                                            value="${escQ(r.name)}"
-                                           oninput="activityData.purchaseList[${i}].name=this.value">
+                                           oninput="activityData.purchaseList[${i}].name=this.value; updateConfirmButton()">
                                 </td>
                                 <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
                                     <select style="font-size:12px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);width:100%;"
-                                            onchange="activityData.purchaseList[${i}].status=this.value;renderAll();">
+                                            onchange="onPurchaseStatusChange(${i}, this)">
                                         <option value="待采购" ${r.status === '待采购' ? 'selected' : ''}>待采购</option>
                                         <option value="已下单" ${r.status === '已下单' ? 'selected' : ''}>已下单</option>
                                         <option value="已到货" ${r.status === '已到货' ? 'selected' : ''}>已到货</option>
                                     </select>
-                                    ${r.status === '已到货' ? `
-                                    <input class="input" style="width:100%;padding:4px 6px;font-size:11px;margin-top:4px;" placeholder="放置位置"
+                                    <input id="purchaseLoc-${i}" class="input" style="width:100%;padding:4px 6px;font-size:11px;margin-top:4px;${r.status === '已到货' ? '' : 'display:none;'}" placeholder="放置位置"
                                            value="${escQ(r.location)}"
-                                           oninput="activityData.purchaseList[${i}].location=this.value">` : ''}
+                                           oninput="activityData.purchaseList[${i}].location=this.value; updateConfirmButton()">
                                 </td>
                                 <td style="padding:6px 4px;border-bottom:1px solid var(--border);text-align:center;">
                                     <button style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:14px;"
@@ -2889,15 +2989,15 @@
 
             <div style="font-size:13px;color:var(--text-secondary);padding:0 4px;display:flex;flex-wrap:wrap;gap:8px;">
                 <span>共 ${totalItems} 项</span><span>|</span>
-                <span style="color:#d97706;">⏳ 待采购：${statusCounts['待采购']}</span>
-                <span style="color:var(--primary);">📦 已下单：${statusCounts['已下单']}</span>
-                <span style="color:var(--success);">✅ 已到货：${statusCounts['已到货']}</span>
+                <span style="color:#d97706;">⏳ 待采购：<span id="purchasePendingCount">${statusCounts['待采购']}</span></span>
+                <span style="color:var(--primary);">📦 已下单：<span id="purchaseOrderedCount">${statusCounts['已下单']}</span></span>
+                <span style="color:var(--success);">✅ 已到货：<span id="purchaseArrivedCount">${statusCounts['已到货']}</span></span>
             </div>
 
             <div class="btn-group">
                 <button class="btn btn-outline" onclick="prevStep()">← 上一步</button>
-                <button class="btn btn-primary btn-lg" onclick="completeStep(3)">
-                    ${done ? '✓ 已完成' : '确认采购清单 →'}
+                <button id="confirmPurchaseBtn" class="btn btn-primary btn-lg" onclick="completeStep(3)" ${confirmDisabled ? 'disabled' : ''}>
+                    ${confirmLabel}
                 </button>
             </div>`;
         }
@@ -5847,7 +5947,8 @@
             const params = new URLSearchParams(window.location.search);
             const id = params.get("id");
             if (id) {
-                const saved = localStorage.getItem("editActivity");
+                // 按活动 id 读取各自独立的草稿数据
+                const saved = localStorage.getItem("editActivity:" + id);
                 if (saved) {
                     try {
                         const data = JSON.parse(saved);
