@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活动工作台</title>
+    <style>
+        :root {
+            --bg: #f5f6fa;
+            --card-bg: #ffffff;
+            --text: #2d3436;
+            --text-secondary: #636e72;
+            --border: #e0e3eb;
+            --primary: #4a6cf7;
+            --primary-light: #eef1ff;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --tag-bg: #f0f2f5;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-hover: 0 4px 12px rgba(0,0,0,0.1);
+            --radius: 12px;
+            --transition: 0.2s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        .header {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 20px;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .selected-count {
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: var(--tag-bg);
+            padding: 6px 14px;
+            border-radius: 20px;
+        }
+
+        .selected-count strong {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px 32px 0;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 200px;
+            max-width: 360px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 14px 10px 38px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--card-bg);
+            color: var(--text);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(74,108,247,0.1);
+        }
+
+        .search-box .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #a0a7b0;
+            font-size: 16px;
+        }
+
+        .filter-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-tag {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text-secondary);
+            transition: var(--transition);
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .filter-tag:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .filter-tag.active {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.1);
+            box-shadow: 0 2px 8px rgba(74,108,247,0.3);
+        }
+
+        .btn-outline {
+            background: var(--card-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-sm {
+            padding: 5px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            filter: brightness(1.1);
+        }
+
+        /* ── Stats bar ── */
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            padding: 16px 32px 0;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .stat-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .stat-dot.progress { background: var(--primary); }
+        .stat-dot.open { background: var(--success); }
+        .stat-dot.ended { background: #a0a7b0; }
+        .stat-dot.draft { background: var(--warning); }
+
+        /* ── Activity Grid ── */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 16px;
+            padding: 20px 32px 32px;
+        }
+
+        .activity-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            padding: 20px 20px 20px 46px;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .activity-card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-1px);
+            border-color: #ccd4e0;
+        }
+
+        .activity-card.selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(74,108,247,0.15);
+            background: #fafbff;
+        }
+
+        .card-checkbox {
+            position: absolute;
+            top: 18px;
+            left: 16px;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            line-height: 1.4;
+            color: var(--text);
+        }
+
+        .card-status {
+            font-size: 11px;
+            font-weight: 500;
+            padding: 3px 10px;
+            border-radius: 12px;
+            white-space: nowrap;
+        }
+
+        .status-progress {
+            background: #eef1ff;
+            color: var(--primary);
+        }
+
+        .status-open {
+            background: #e6f9f1;
+            color: #059669;
+        }
+
+        .status-ended {
+            background: #f0f2f5;
+            color: #6b7280;
+        }
+
+        .status-draft {
+            background: #fff7ed;
+            color: #d97706;
+        }
+
+        .card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .card-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .card-tag {
+            font-size: 11px;
+            padding: 2px 10px;
+            background: var(--tag-bg);
+            border-radius: 10px;
+            color: var(--text-secondary);
+        }
+
+        .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+        }
+
+        .card-progress {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .progress-bar {
+            width: 80px;
+            height: 5px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .icon-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .icon-btn:hover {
+            background: #f5f6fa;
+            color: var(--primary);
+        }
+
+        .icon-btn.fav {
+            color: #f59e0b;
+            border-color: #fde68a;
+        }
+
+        /* ── Detail Panel ── */
+        .detail-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.35);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.15s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .detail-panel {
+            background: var(--card-bg);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 560px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            animation: slideUp 0.2s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .detail-header {
+            padding: 24px 24px 0;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+        }
+
+        .detail-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .detail-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .detail-close:hover {
+            background: #f5f6fa;
+            color: var(--text);
+        }
+
+        .detail-body {
+            padding: 20px 24px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .detail-row {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        .detail-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            width: 70px;
+            flex-shrink: 0;
+            padding-top: 2px;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 10px;
+            padding-top: 8px;
+        }
+
+        /* ── Empty State ── */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state .empty-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .header { padding: 12px 16px; }
+            .toolbar, .stats-bar, .grid-container { padding-left: 16px; padding-right: 16px; }
+            .grid-container { grid-template-columns: 1fr; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .search-box { max-width: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ── Header ── -->
+    <header class="header">
+        <div class="header-left">
+            <a href="../index.html" style="text-decoration:none;color:var(--text-secondary);font-size:16px;margin-right:8px;" title="返回首页">←</a>
+            <div class="logo">📋</div>
+            <h1>活动工作台</h1>
+        </div>
+        <div class="header-right">
+            <span class="selected-count">已选择 <strong id="selectedCount">0</strong> 个活动</span>
+            <button class="btn btn-outline btn-sm" onclick="clearSelection()">清空选择</button>
+            <button class="btn btn-primary btn-sm" onclick="batchAction()">批量操作</button>
+        </div>
+    </header>
+
+    <!-- ── Search & Filters ── -->
+    <div class="toolbar">
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="搜索活动名称或描述..." oninput="renderActivities()">
+        </div>
+        <div class="filter-tags" id="statusFilters">
+            <span class="filter-tag active" data-status="all" onclick="setStatusFilter('all', this)">全部</span>
+            <span class="filter-tag" data-status="progress" onclick="setStatusFilter('progress', this)">进行中</span>
+            <span class="filter-tag" data-status="open" onclick="setStatusFilter('open', this)">报名中</span>
+            <span class="filter-tag" data-status="draft" onclick="setStatusFilter('draft', this)">草稿</span>
+        </div>
+        <button class="btn btn-primary" onclick="window.location.href='create.html'">+ 新建活动</button>
+    </div>
+
+    <!-- ── Stats ── -->
+    <div class="stats-bar">
+        <span class="stat-item"><span class="stat-dot progress"></span> 进行中: <strong id="statProgress">0</strong></span>
+        <span class="stat-item"><span class="stat-dot open"></span> 报名中: <strong id="statOpen">0</strong></span>
+        <span class="stat-item"><span class="stat-dot draft"></span> 草稿: <strong id="statDraft">0</strong></span>
+        <span class="stat-item"><span class="stat-dot ended"></span> 已结束: <strong id="statEnded">0</strong></span>
+    </div>
+
+    <!-- ── Activity Grid ── -->
+    <div class="grid-container" id="activityGrid"></div>
+
+    <!-- ── Detail Modal ── -->
+    <div id="detailOverlay" class="detail-overlay" style="display:none" onclick="if(event.target===this) closeDetail()"></div>
+
+    <script>
+        // ── Data ──
+        let activities = [
+            {
+                id: 1,
+                title: "2026 夏日音乐节",
+                desc: "户外音乐节，包含乐队演出、美食摊位和互动游戏区域。",
+                status: "open",
+                date: "2026-08-20 ~ 2026-08-22",
+                location: "城市中央公园",
+                capacity: 5000,
+                enrolled: 2340,
+                tags: ["音乐", "户外", "大型"],
+                favorite: true
+            },
+            {
+                id: 2,
+                title: "秋季编程马拉松",
+                desc: "48小时编程竞赛，开发者组队完成挑战项目，赢取丰厚奖品。",
+                status: "open",
+                date: "2026-09-15 ~ 2026-09-17",
+                location: "创新科技中心",
+                capacity: 200,
+                enrolled: 87,
+                tags: ["技术", "竞赛", "团队"],
+                favorite: false
+            },
+            {
+                id: 3,
+                title: "亲子手工坊 — DIY风筝制作",
+                desc: "亲子互动活动，家长与孩子共同设计并制作专属风筝。",
+                status: "progress",
+                date: "2026-08-10 ~ 2026-08-31",
+                location: "社区文化馆",
+                capacity: 120,
+                enrolled: 96,
+                tags: ["亲子", "手工", "社区"],
+                favorite: true
+            },
+            {
+                id: 4,
+                title: "企业数字化转型沙龙",
+                desc: "邀请行业专家分享数字化转型实践经验，包含圆桌讨论环节。",
+                status: "draft",
+                date: "2026-10-10",
+                location: "待定",
+                capacity: 80,
+                enrolled: 0,
+                tags: ["商业", "技术", "沙龙"],
+                favorite: false
+            },
+            {
+                id: 5,
+                title: "城市夜跑挑战赛",
+                desc: "5公里夜跑活动，荧光装备、音乐助阵，适合所有年龄段。",
+                status: "ended",
+                date: "2026-07-28",
+                location: "滨江跑道",
+                capacity: 800,
+                enrolled: 632,
+                tags: ["运动", "夜跑", "城市"],
+                favorite: false
+            },
+            {
+                id: 6,
+                title: "读书分享会 —《思考，快与慢》",
+                desc: "每月一次的线下读书分享，本期书籍为卡尼曼的行为经济学经典。",
+                status: "open",
+                date: "2026-08-25",
+                location: "城市图书馆三楼",
+                capacity: 40,
+                enrolled: 28,
+                tags: ["读书", "分享", "线下"],
+                favorite: true
+            },
+            {
+                id: 7,
+                title: "摄影大赛 —「城市的角落」",
+                desc: "城市主题摄影作品征集，优秀作品将在美术馆展出一个月。",
+                status: "progress",
+                date: "2026-08-01 ~ 2026-09-15",
+                location: "线上 + 市美术馆",
+                capacity: 9999,
+                enrolled: 456,
+                tags: ["摄影", "艺术", "展览"],
+                favorite: false
+            },
+            {
+                id: 8,
+                title: "创业周末 — 从想法到原型",
+                desc: "周末创业实战营，导师带队将创意转化为可演示的产品原型。",
+                status: "draft",
+                date: "2026-09-05 ~ 2026-09-06",
+                location: "待定",
+                capacity: 60,
+                enrolled: 0,
+                tags: ["创业", "实战", "培训"],
+                favorite: false
+            },
+            {
+                id: 9,
+                title: "中秋节花灯游园会",
+                desc: "中秋节主题游园，花灯展览、猜灯谜、传统手工艺体验。",
+                status: "progress",
+                date: "2026-09-20 ~ 2026-09-22",
+                location: "老街广场",
+                capacity: 3000,
+                enrolled: 1820,
+                tags: ["节日", "传统", "游园"],
+                favorite: true
+            }
+        ];
+
+        let selectedIds = new Set();
+        let currentStatusFilter = "all";
+
+        // ── Status helpers ──
+        const statusLabels = {
+            progress: "进行中",
+            open: "报名中",
+            draft: "草稿",
+            ended: "已结束"
+        };
+
+        const statusClass = {
+            progress: "status-progress",
+            open: "status-open",
+            draft: "status-draft",
+            ended: "status-ended"
+        };
+
+        // ── Render ──
+        function renderActivities() {
+            const searchTerm = document.getElementById("searchInput").value.toLowerCase();
+            const grid = document.getElementById("activityGrid");
+
+            let filtered = activities.filter(a => {
+                const matchStatus = currentStatusFilter === "all"
+                    ? a.status !== "ended"
+                    : a.status === currentStatusFilter;
+                const matchSearch = !searchTerm ||
+                    a.title.toLowerCase().includes(searchTerm) ||
+                    a.desc.toLowerCase().includes(searchTerm) ||
+                    a.tags.some(t => t.toLowerCase().includes(searchTerm)) ||
+                    a.location.toLowerCase().includes(searchTerm);
+                return matchStatus && matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <p>没有找到匹配的活动</p>
+                    </div>`;
+            } else {
+                grid.innerHTML = filtered.map(a => {
+                    const enrolledPct = Math.round((a.enrolled / a.capacity) * 100);
+                    return `
+                    <div class="activity-card ${selectedIds.has(a.id) ? 'selected' : ''}"
+                         onclick="openActivity(${a.id})">
+                        <input type="checkbox" class="card-checkbox"
+                               ${selectedIds.has(a.id) ? 'checked' : ''}
+                               onclick="event.stopPropagation();toggleSelect(${a.id})"
+                               title="选择此活动">
+                        <div class="card-header">
+                            <span class="card-title">${esc(a.title)}</span>
+                            <span class="card-status ${statusClass[a.status]}">${statusLabels[a.status]}</span>
+                        </div>
+                        <p style="font-size:13px;color:var(--text-secondary);line-height:1.5;">
+                            ${esc(a.desc)}
+                        </p>
+                        <div class="card-meta">
+                            <span>📅 ${esc(a.date)}</span>
+                            <span>📍 ${esc(a.location)}</span>
+                        </div>
+                        <div class="card-tags">
+                            ${a.tags.map(t => `<span class="card-tag">${esc(t)}</span>`).join('')}
+                        </div>
+                        <div class="card-footer">
+                            <div class="card-progress">
+                                <span>👥 ${a.enrolled}/${a.capacity}</span>
+                                <div class="progress-bar">
+                                    <div class="progress-bar-fill" style="width:${Math.min(enrolledPct,100)}%"></div>
+                                </div>
+                                <span>${enrolledPct}%</span>
+                            </div>
+                            <div class="card-actions">
+                                <button class="icon-btn ${a.favorite ? 'fav' : ''}"
+                                        onclick="event.stopPropagation();toggleFav(${a.id})"
+                                        title="收藏">${a.favorite ? '★' : '☆'}</button>
+                                <button class="icon-btn"
+                                        onclick="event.stopPropagation();showDetail(${a.id})"
+                                        title="详情">📋</button>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+
+            updateStats();
+            updateSelectedCount();
+        }
+
+        function esc(s) {
+            const el = document.createElement("span");
+            el.textContent = s;
+            return el.innerHTML;
+        }
+
+        // ── Open / Edit Activity ──
+        function openActivity(id) {
+            const a = activities.find(a => a.id === id);
+            if (!a) return;
+            localStorage.setItem('editActivity', JSON.stringify(a));
+            window.location.href = 'create.html?id=' + id;
+        }
+
+        // ── Stats ──
+        function updateStats() {
+            document.getElementById("statProgress").textContent = activities.filter(a => a.status === "progress").length;
+            document.getElementById("statOpen").textContent = activities.filter(a => a.status === "open").length;
+            document.getElementById("statDraft").textContent = activities.filter(a => a.status === "draft").length;
+            document.getElementById("statEnded").textContent = activities.filter(a => a.status === "ended").length;
+        }
+
+        function updateSelectedCount() {
+            document.getElementById("selectedCount").textContent = selectedIds.size;
+        }
+
+        // ── Selection ──
+        function toggleSelect(id) {
+            if (selectedIds.has(id)) {
+                selectedIds.delete(id);
+            } else {
+                selectedIds.add(id);
+            }
+            renderActivities();
+        }
+
+        function clearSelection() {
+            selectedIds.clear();
+            renderActivities();
+        }
+
+        function selectAll() {
+            const searchTerm = document.getElementById("searchInput").value.toLowerCase();
+            const visibleIds = activities.filter(a => {
+                const matchStatus = currentStatusFilter === "all"
+                    ? a.status !== "ended"
+                    : a.status === currentStatusFilter;
+                const matchSearch = !searchTerm ||
+                    a.title.toLowerCase().includes(searchTerm) ||
+                    a.desc.toLowerCase().includes(searchTerm) ||
+                    a.tags.some(t => t.toLowerCase().includes(searchTerm)) ||
+                    a.location.toLowerCase().includes(searchTerm);
+                return matchStatus && matchSearch;
+            }).map(a => a.id);
+            visibleIds.forEach(id => selectedIds.add(id));
+            renderActivities();
+        }
+
+        // ── Filter ──
+        function setStatusFilter(status, el) {
+            currentStatusFilter = status;
+            document.querySelectorAll("#statusFilters .filter-tag").forEach(t => t.classList.remove("active"));
+            el.classList.add("active");
+            renderActivities();
+        }
+
+        // ── Favorite ──
+        function toggleFav(id) {
+            const a = activities.find(a => a.id === id);
+            if (a) a.favorite = !a.favorite;
+            renderActivities();
+        }
+
+        // ── Detail ──
+        function showDetail(id) {
+            const a = activities.find(a => a.id === id);
+            if (!a) return;
+            const enrolledPct = Math.round((a.enrolled / a.capacity) * 100);
+            const overlay = document.getElementById("detailOverlay");
+            overlay.innerHTML = `
+                <div class="detail-panel">
+                    <div class="detail-header">
+                        <h2>${esc(a.title)}</h2>
+                        <button class="detail-close" onclick="closeDetail()">✕</button>
+                    </div>
+                    <div class="detail-body">
+                        <div class="detail-row">
+                            <span class="detail-label">状态</span>
+                            <span class="detail-value"><span class="card-status ${statusClass[a.status]}">${statusLabels[a.status]}</span></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">描述</span>
+                            <span class="detail-value">${esc(a.desc)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">时间</span>
+                            <span class="detail-value">📅 ${esc(a.date)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">地点</span>
+                            <span class="detail-value">📍 ${esc(a.location)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">报名</span>
+                            <span class="detail-value">👥 ${a.enrolled} / ${a.capacity} (${enrolledPct}%)</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">标签</span>
+                            <span class="detail-value">
+                                ${a.tags.map(t => `<span class="card-tag">${esc(t)}</span>`).join(' ')}
+                            </span>
+                        </div>
+                        <div class="detail-actions">
+                            <button class="btn btn-primary" onclick="selectActivity(${a.id});closeDetail();">
+                                ${selectedIds.has(a.id) ? '✓ 已选择' : '选择此活动'}
+                            </button>
+                            <button class="btn btn-outline" onclick="toggleFav(${a.id});showDetail(${a.id});">
+                                ${a.favorite ? '★ 已收藏' : '☆ 收藏'}
+                            </button>
+                            <button class="btn btn-outline" onclick="closeDetail()">关闭</button>
+                        </div>
+                    </div>
+                </div>`;
+            overlay.style.display = "flex";
+        }
+
+        function closeDetail() {
+            document.getElementById("detailOverlay").style.display = "none";
+            renderActivities();
+        }
+
+        function selectActivity(id) {
+            selectedIds.add(id);
+        }
+
+        // ── Batch Action ──
+        function batchAction() {
+            if (selectedIds.size === 0) {
+                alert("请先选择至少一个活动");
+                return;
+            }
+            alert(`已选择 ${selectedIds.size} 个活动，可在此处执行批量操作（如导出、批量修改状态等）`);
+        }
+
+        // ── Create ──
+        function createActivity() {
+            alert("打开新建活动表单（此处可扩展为完整的创建表单弹窗）");
+        }
+
+        // ── Init ──
+        function loadSavedEdits() {
+            // Check localStorage for any edited activity data
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key === "editActivity") {
+                    try {
+                        const data = JSON.parse(localStorage.getItem(key));
+                        const a = activities.find(a => a.id === data.id);
+                        if (a && data.title) {
+                            a.title = data.title;
+                            a.desc = data.desc || a.desc;
+                            a.tags = data.tags || a.tags;
+                        }
+                    } catch (e) { /* ignore */ }
+                }
+            }
+        }
+        loadSavedEdits();
+        renderActivities();
+    </script>
+</body>
+</html>

@@ -1,0 +1,2835 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新建活动 - 活动工作台</title>
+    <style>
+        :root {
+            --bg: #f5f6fa;
+            --card-bg: #ffffff;
+            --text: #2d3436;
+            --text-secondary: #636e72;
+            --border: #e0e3eb;
+            --primary: #4a6cf7;
+            --primary-light: #eef1ff;
+            --primary-dark: #3b54d4;
+            --success: #10b981;
+            --success-light: #e6f9f1;
+            --warning: #f59e0b;
+            --warning-light: #fff7ed;
+            --danger: #ef4444;
+            --tag-bg: #f0f2f5;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --transition: 0.2s ease;
+            --sidebar-width: 320px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        .header {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .back-btn {
+            width: 34px; height: 34px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .back-btn:hover { background: #f5f6fa; color: var(--text); }
+
+        .header h1 {
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+        }
+
+        .header .step-indicator {
+            margin-left: auto;
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: var(--tag-bg);
+            padding: 5px 14px;
+            border-radius: 20px;
+        }
+
+        .header .step-indicator strong { color: var(--primary); }
+
+        /* ── Layout ── */
+        .layout {
+            display: flex;
+            height: calc(100vh - 63px);
+        }
+
+        /* ── Sidebar Timeline ── */
+        .sidebar {
+            width: var(--sidebar-width);
+            flex-shrink: 0;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 8px 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .timeline-header {
+            padding: 16px 20px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .timeline-progress {
+            margin: 0 20px 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timeline-progress-bar {
+            flex: 1;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .timeline-progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+
+        .timeline-progress-text {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .step-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+
+        .step-nav-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: var(--transition);
+            border-left: 3px solid transparent;
+            position: relative;
+            user-select: none;
+        }
+
+        .step-nav-item:hover {
+            background: #f8f9fc;
+        }
+
+        .step-nav-item.active {
+            background: var(--primary-light);
+            border-left-color: var(--primary);
+        }
+
+        .step-nav-item.completed .step-dot {
+            background: var(--success);
+            border-color: var(--success);
+            color: #fff;
+        }
+
+        .step-nav-item.active .step-dot {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+
+        .step-nav-item.future {
+            opacity: 0.6;
+        }
+
+        .step-dot {
+            width: 28px; height: 28px;
+            min-width: 28px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .step-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+
+        .step-title {
+            font-size: 13px;
+            font-weight: 500;
+            line-height: 1.3;
+        }
+
+        .step-hint {
+            font-size: 11px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .step-check {
+            margin-left: auto;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-divider {
+            margin: 4px 20px;
+            border-top: 1px dashed var(--border);
+        }
+
+        .optional-section {
+            padding: 4px 0 12px;
+        }
+
+        .optional-header {
+            padding: 8px 20px 4px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Main Content ── */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px 40px;
+        }
+
+        .content-panel {
+            max-width: 720px;
+            animation: fadeSlideIn 0.25s ease;
+        }
+
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .content-panel h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.3px;
+        }
+
+        .content-panel .subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+            line-height: 1.5;
+        }
+
+        /* ── Card / Section ── */
+        .section-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .section-card h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .section-card label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .input, .textarea, .select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: inherit;
+            background: var(--card-bg);
+            color: var(--text);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .input:focus, .textarea:focus, .select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(74,108,247,0.08);
+        }
+
+        .textarea {
+            resize: vertical;
+            min-height: 100px;
+            line-height: 1.6;
+        }
+
+        .select { cursor: pointer; }
+
+        /* ── Buttons ── */
+        .btn {
+            padding: 10px 22px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            box-shadow: 0 2px 8px rgba(74,108,247,0.3);
+        }
+
+        .btn-outline {
+            background: var(--card-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: #fff;
+        }
+
+        .btn-success:hover { filter: brightness(1.1); }
+
+        .btn-lg {
+            padding: 13px 28px;
+            font-size: 15px;
+            border-radius: 10px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* ── AI Output ── */
+        .ai-box {
+            background: linear-gradient(135deg, #f8faff 0%, #eef1ff 100%);
+            border: 1px dashed #b8c4f8;
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-top: 16px;
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text);
+            display: none;
+            white-space: pre-wrap;
+        }
+
+        .ai-box.show { display: block; }
+
+        .ai-box .ai-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ai-typing {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+            font-size: 13px;
+            margin-top: 12px;
+        }
+
+        .ai-typing.show { display: flex; }
+
+        .ai-typing .dots span {
+            display: inline-block;
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: blink 1.4s infinite both;
+        }
+
+        .ai-typing .dots span:nth-child(2) { animation-delay: 0.2s; }
+        .ai-typing .dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes blink {
+            0%, 80%, 100% { opacity: 0; transform: scale(0.8); }
+            40% { opacity: 1; transform: scale(1); }
+        }
+
+        /* ── Checklist ── */
+        .checklist { list-style: none; }
+
+        .checklist li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .checklist li:last-child { border-bottom: none; }
+
+        .checklist input[type="checkbox"] {
+            width: 18px; height: 18px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .checklist .item-done {
+            text-decoration: line-through;
+            color: var(--text-secondary);
+        }
+
+        /* ── Budget Table ── */
+        .budget-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .budget-table th {
+            text-align: left;
+            padding: 10px 12px;
+            background: #f8f9fc;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .budget-table td {
+            padding: 9px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .budget-table .total-row td {
+            font-weight: 600;
+            border-top: 2px solid var(--text);
+            border-bottom: none;
+            background: #fafbfc;
+        }
+
+        .budget-table .input-cell {
+            width: 130px;
+        }
+
+        .budget-table .input-cell input {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+            text-align: right;
+        }
+
+        /* ── Progress ── */
+        .progress-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .progress-step:last-child { border-bottom: none; }
+
+        .progress-radio {
+            width: 20px; height: 20px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        /* ── Badge ── */
+        .badge-display {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .badge-icon {
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 56px;
+            box-shadow: 0 8px 32px rgba(245,158,11,0.4);
+            animation: badgeAppear 0.6s ease;
+        }
+
+        @keyframes badgeAppear {
+            from { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.15); }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1d2e;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 300;
+            animation: toastIn 0.3s ease;
+            pointer-events: none;
+        }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        /* ── AI Planning Assistant ── */
+        .ai-float-wrap {
+            position: fixed;
+            right: 28px;
+            bottom: 28px;
+            z-index: 240;
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+        }
+
+        .ai-float-menu {
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .ai-float-wrap:hover .ai-float-menu { display: flex; }
+
+        .ai-menu-btn {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text);
+            font-size: 13px;
+            cursor: pointer;
+            box-shadow: var(--shadow-md);
+            white-space: nowrap;
+        }
+
+        .ai-menu-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .ai-float-btn {
+            width: 58px;
+            height: 58px;
+            border-radius: 18px;
+            border: none;
+            background: var(--primary);
+            color: #fff;
+            font-size: 26px;
+            cursor: pointer;
+            box-shadow: 0 10px 28px rgba(74,108,247,0.32);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .ai-float-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .ai-mini-chat {
+            position: fixed;
+            right: 28px;
+            bottom: 98px;
+            width: 360px;
+            max-width: calc(100vw - 32px);
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            z-index: 245;
+            overflow: hidden;
+            display: none;
+        }
+
+        .ai-mini-chat.show { display: block; }
+
+        .ai-chat-header,
+        .ai-full-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            background: #fafbff;
+        }
+
+        .ai-chat-title {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+
+        .ai-chat-title strong {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .ai-chat-title span {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .ai-chat-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .ai-icon-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .ai-icon-btn:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .ai-messages {
+            height: 260px;
+            overflow-y: auto;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #fcfdff;
+        }
+
+        .ai-message {
+            max-width: 86%;
+            border-radius: 12px;
+            padding: 9px 12px;
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .ai-message.user {
+            align-self: flex-end;
+            background: var(--primary);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ai-message.assistant {
+            align-self: flex-start;
+            background: var(--tag-bg);
+            color: var(--text);
+            border-bottom-left-radius: 4px;
+        }
+
+        .ai-message.loading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #eef1ff;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .ai-thinking-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid rgba(74,108,247,0.18);
+            border-top-color: var(--primary);
+            animation: aiSpin 0.9s linear infinite;
+            flex-shrink: 0;
+        }
+
+        .ai-thinking-text {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ai-thinking-dots {
+            display: inline-flex;
+            gap: 3px;
+        }
+
+        .ai-thinking-dots span {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: aiDotPulse 1.2s ease-in-out infinite;
+        }
+
+        .ai-thinking-dots span:nth-child(2) { animation-delay: 0.16s; }
+        .ai-thinking-dots span:nth-child(3) { animation-delay: 0.32s; }
+
+        @keyframes aiSpin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes aiDotPulse {
+            0%, 80%, 100% { opacity: 0.32; transform: translateY(0); }
+            40% { opacity: 1; transform: translateY(-3px); }
+        }
+
+        .ai-chat-input {
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .ai-chat-input textarea {
+            min-height: 44px;
+            max-height: 96px;
+            resize: vertical;
+            flex: 1;
+        }
+
+        .ai-fullscreen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 260;
+            display: none;
+            flex-direction: column;
+        }
+
+        .ai-fullscreen.show { display: flex; }
+
+        .ai-full-body {
+            flex: 1;
+            min-height: 0;
+            display: grid;
+            grid-template-columns: 280px minmax(360px, 1fr) 360px;
+            gap: 1px;
+            background: var(--border);
+        }
+
+        .ai-side,
+        .ai-main,
+        .ai-plan-preview {
+            background: var(--card-bg);
+            min-height: 0;
+            overflow-y: auto;
+            padding: 18px;
+        }
+
+        .ai-main {
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+        }
+
+        .ai-main .ai-messages {
+            flex: 1;
+            height: auto;
+            padding: 20px;
+        }
+
+        .ai-panel-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 12px;
+        }
+
+        .ai-history-item {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .ai-history-item:hover,
+        .ai-history-item.selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .ai-history-item strong {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .ai-history-item span,
+        .ai-muted {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .ai-conversation-item {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            background: #fff;
+        }
+
+        .ai-conversation-item:hover {
+            border-color: var(--primary);
+            background: #fafbff;
+        }
+
+        .ai-conversation-item strong {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 4px;
+            line-height: 1.35;
+        }
+
+        .ai-conversation-time {
+            display: block;
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .ai-conversation-empty {
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .ai-report-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .ai-report-card {
+            background: #f8f9fc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .ai-report-card strong {
+            display: block;
+            font-size: 18px;
+            margin-bottom: 2px;
+        }
+
+        .ai-generating-panel {
+            border: 1px dashed #b8c4f8;
+            background: #f8faff;
+            border-radius: 10px;
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary);
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .ai-preview-section {
+            border-bottom: 1px solid var(--border);
+            padding: 12px 0;
+        }
+
+        .ai-preview-section:first-of-type { padding-top: 0; }
+
+        .ai-preview-section h4 {
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .ai-preview-section p {
+            font-size: 13px;
+            line-height: 1.65;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 860px) {
+            .layout { flex-direction: column; }
+            .sidebar {
+                width: 100%;
+                flex-shrink: 0;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                max-height: 200px;
+                flex-direction: row;
+                overflow-x: auto;
+                padding: 8px;
+            }
+            .timeline-header, .timeline-progress { display: none; }
+            .timeline-progress-text { display: none; }
+            .step-nav {
+                display: flex;
+                gap: 4px;
+                flex-direction: row;
+            }
+            .step-nav-item {
+                flex-direction: column;
+                align-items: center;
+                padding: 8px 10px;
+                border-left: none;
+                border-bottom: 3px solid transparent;
+                white-space: nowrap;
+                min-width: 80px;
+                text-align: center;
+                gap: 4px;
+            }
+            .step-nav-item.active { border-left-color: transparent; border-bottom-color: var(--primary); }
+            .step-hint { display: none; }
+            .step-check { display: none; }
+            .content { padding: 20px 16px; }
+            .ai-full-body { grid-template-columns: 1fr; }
+            .ai-side, .ai-plan-preview { max-height: 34vh; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ── Header ── -->
+    <header class="header">
+        <a href="index.html" class="back-btn" title="返回活动列表">←</a>
+        <h1 id="headerTitle" onclick="editTitleInline()" style="cursor:pointer;" title="点击编辑活动名称">未命名活动</h1>
+        <span class="step-indicator">步骤 <strong id="currentStepNum">1</strong> / 8</span>
+        <button class="btn btn-outline btn-sm" onclick="saveDraft()" title="保存当前进度">💾 保存草稿</button>
+    </header>
+
+    <!-- ── Layout ── -->
+    <div class="layout">
+        <!-- Sidebar Timeline -->
+        <aside class="sidebar">
+            <div class="timeline-header">活动流程</div>
+            <div class="timeline-progress">
+                <div class="timeline-progress-bar">
+                    <div class="timeline-progress-fill" id="globalProgress" style="width:0%"></div>
+                </div>
+                <span class="timeline-progress-text" id="progressText">0 / 8</span>
+            </div>
+            <nav class="step-nav" id="stepNav"></nav>
+            <div class="sidebar-divider"></div>
+            <div class="optional-section">
+                <div class="optional-header">选填</div>
+                <div class="step-nav-item" id="reflectionNav" onclick="goToReflection()">
+                    <span class="step-dot" style="border-style:dashed;">🪞</span>
+                    <span class="step-info">
+                        <span class="step-title">Reflection 复盘</span>
+                        <span class="step-hint">总结经验教训</span>
+                    </span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content" id="mainContent"></main>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast" style="display:none"></div>
+
+    <!-- AI Planning Assistant -->
+    <div class="ai-float-wrap" id="aiFloatWrap">
+        <div class="ai-float-menu">
+            <button class="ai-menu-btn" onclick="openAiMiniChat()">展开对话</button>
+            <button class="ai-menu-btn" onclick="closeAiFloat()">关闭浮标</button>
+        </div>
+        <button class="ai-float-btn" onclick="openAiMiniChat()" title="AI 策划助手">AI</button>
+    </div>
+
+    <section class="ai-mini-chat" id="aiMiniChat" aria-label="AI 策划助手小窗"></section>
+    <section class="ai-fullscreen" id="aiFullscreen" aria-label="AI 策划助手主界面"></section>
+
+    <script>
+        // ── Step Definitions ──
+        const steps = [
+            {
+                num: 1,
+                title: "输出策划案",
+                hint: "完善活动策划方案",
+                icon: "📝",
+                render() { return renderStep1(); }
+            },
+            {
+                num: 2,
+                title: "编制预算案",
+                hint: "制定活动预算",
+                icon: "💰",
+                render() { return renderStep2(); }
+            },
+            {
+                num: 3,
+                title: "审批流程或导出文件",
+                hint: "提交审批",
+                icon: "📋",
+                render() { return renderStep3(); }
+            },
+            {
+                num: 4,
+                title: "采购Checklist",
+                hint: "按清单采购物资",
+                icon: "📦",
+                render() { return renderStep4(); }
+            },
+            {
+                num: 5,
+                title: "活动进度跟踪",
+                hint: "监控各项进展",
+                icon: "📊",
+                render() { return renderStep5(); }
+            },
+            {
+                num: 6,
+                title: "活动完成",
+                hint: "标记完成状态",
+                icon: "✅",
+                render() { return renderStep6(); }
+            },
+            {
+                num: 7,
+                title: "归档资料库",
+                hint: "文档打包归档",
+                icon: "📁",
+                render() { return renderStep7(); }
+            },
+            {
+                num: 8,
+                title: "获得完成徽章",
+                hint: "活动闭环",
+                icon: "🏆",
+                render() { return renderStep8(); }
+            }
+        ];
+
+        // ── State ──
+        let currentStep = 0;          // 0-indexed
+        let completedSteps = new Set();
+        let activityData = {
+            name: "",
+            type: "音乐节",
+            aiPlan: "",
+            planContent: "",
+            planSections: {
+                overview: "",
+                planOverview: {
+                    theme: "",
+                    objective: "",
+                    dateYear: "",
+                    dateMonth: "",
+                    dateDay: "",
+                    targetAudience: "",
+                    countPerSession: "",
+                    sessions: ""
+                },
+                purpose: "",
+                contentFlow: "",
+                requirements: "",
+                execution: "",
+                riskPlan: ""
+            },
+            budget: [
+                { item: "场地租赁", cost: 0 },
+                { item: "设备搭建", cost: 0 },
+                { item: "人员费用", cost: 0 },
+                { item: "宣传推广", cost: 0 },
+                { item: "物资采购", cost: 0 },
+                { item: "应急储备", cost: 0 }
+            ],
+            approved: false,
+            checklist: [],
+            progress: {},
+            reflection: "",
+            archived: false,
+            badgeEarned: false,
+            aiAssistant: {
+                floatVisible: true,
+                miniOpen: false,
+                fullscreenOpen: false,
+                ideaInput: "",
+                selectedHistoryIds: [],
+                messages: [
+                    {
+                        role: "assistant",
+                        text: "你好，我是 AI 策划助手。你可以先用一句话告诉我活动想法，我会帮你追问、评估可行性，并生成可采纳到策划案的草稿。"
+                    }
+                ],
+                feasibilityReport: null,
+                draftPlan: null,
+                isThinking: false
+            }
+        };
+
+        // ── Render Sidebar ──
+        function renderSidebar() {
+            const nav = document.getElementById("stepNav");
+            nav.innerHTML = steps.map((s, i) => {
+                let cls = "";
+                if (completedSteps.has(i)) cls = "completed";
+                else if (i === currentStep) cls = "active";
+                else cls = "future";
+                return `
+                <div class="step-nav-item ${cls}" onclick="goToStep(${i})">
+                    <span class="step-dot">${completedSteps.has(i) ? '✓' : s.num}</span>
+                    <span class="step-info">
+                        <span class="step-title">${s.icon} ${s.title}</span>
+                        <span class="step-hint">${s.hint}</span>
+                    </span>
+                    ${completedSteps.has(i) ? '<span class="step-check" style="color:var(--success)">✓</span>' : ''}
+                </div>`;
+            }).join('');
+
+            document.getElementById("currentStepNum").textContent = currentStep + 1;
+
+            const pct = Math.round((completedSteps.size / steps.length) * 100);
+            document.getElementById("globalProgress").style.width = pct + "%";
+            document.getElementById("progressText").textContent = `${completedSteps.size} / ${steps.length}`;
+        }
+
+        // ── Step validation ──
+        function isStepValid(index) {
+            const po = activityData.planSections.planOverview;
+            const p = activityData.planSections;
+            switch (index) {
+                case 0: // 输出策划案
+                    return !!(po.theme.trim() && po.objective.trim() && po.dateYear.trim() &&
+                        po.dateMonth.trim() && po.dateDay.trim() && po.targetAudience.trim() &&
+                        po.countPerSession.trim() && po.sessions.trim() &&
+                        p.purpose.trim() && p.contentFlow.trim() && p.requirements.trim() &&
+                        p.execution.trim() && p.riskPlan.trim());
+                case 1: // 编制预算案
+                    return activityData.budget.some(b => Number(b.cost) > 0);
+                case 2: // 审批流程
+                    return activityData.approved;
+                case 3: // 采购Checklist
+                    return activityData.checklist.length > 0 && activityData.checklist.every(c => c.done);
+                case 4: // 活动进度跟踪
+                    return activityData.progressItems && activityData.progressItems.length > 0;
+                case 5: // 活动完成
+                    return true; // controlled by checkbox in UI
+                case 6: // 归档资料库
+                    return activityData.archivedItems && activityData.archivedItems.length > 0;
+                case 7: // 获得完成徽章
+                    return true;
+                default: return false;
+            }
+        }
+
+        function goToStep(index) {
+            currentStep = index;
+            renderAll();
+            document.getElementById("mainContent").scrollTop = 0;
+        }
+
+        // ── Save draft ──
+        function ensureActivityId() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get("id");
+            if (!id) {
+                // New activity: assign a temporary id so draft can be saved
+                const newId = "draft_" + Date.now();
+                window.history.replaceState(null, "", "?id=" + newId);
+                return newId;
+            }
+            return id;
+        }
+
+        function saveDraft() {
+            ensureActivityId();
+            saveActivityData();
+            showToast("💾 草稿已保存");
+        }
+
+        // ── Persist workflow data to localStorage ──
+        function saveActivityData() {
+            const id = ensureActivityId();
+            if (id) {
+                const existing = JSON.parse(localStorage.getItem("editActivity") || "{}");
+                const aiSnapshot = getSerializableAiAssistant();
+                const data = {
+                    ...existing,
+                    ...activityData,
+                    aiAssistant: aiSnapshot,
+                    title: activityData.name,
+                    desc: activityData.planContent,
+                    completedSteps: Array.from(completedSteps)
+                };
+                localStorage.setItem("editActivity", JSON.stringify(data));
+                saveAiAssistantHistory(id);
+            }
+        }
+
+        function getCurrentActivityId() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get("id") || "";
+        }
+
+        function saveAiAssistantHistory(id) {
+            ensureAiAssistant();
+            if (!id || !activityData.aiAssistant) return;
+            localStorage.setItem(`aiAssistantHistory:${id}`, JSON.stringify(getSerializableAiAssistant()));
+        }
+
+        function getSerializableAiAssistant() {
+            ensureAiAssistant();
+            return {
+                ...activityData.aiAssistant,
+                isThinking: false,
+                messages: (activityData.aiAssistant.messages || []).filter(m => !m.loading)
+            };
+        }
+
+        function loadAiAssistantHistory(id) {
+            if (!id) return null;
+            const raw = localStorage.getItem(`aiAssistantHistory:${id}`);
+            if (!raw) return null;
+            try {
+                const data = JSON.parse(raw);
+                return {
+                    ...data,
+                    isThinking: false,
+                    miniOpen: false,
+                    fullscreenOpen: false,
+                    messages: Array.isArray(data.messages) && data.messages.length ? data.messages.filter(m => !m.loading) : undefined
+                };
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function completeStep(index) {
+            if (!isStepValid(index)) {
+                showToast("⚠️ 请填写当前步骤的所有必填内容后再完成");
+                return;
+            }
+            completedSteps.add(index);
+            if (index === steps.length - 1) {
+                activityData.badgeEarned = true;
+            }
+            saveActivityData();
+            renderAll();
+            if (index < steps.length - 1) {
+                showToast(`✅ 「${steps[index].title}」已完成，进入下一步`);
+            } else {
+                showToast("🎉 全部流程已完成！活动完美闭环！");
+            }
+            document.getElementById("mainContent").scrollTop = 0;
+        }
+
+        function nextStep() {
+            completeStep(currentStep);
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                renderAll();
+                document.getElementById("mainContent").scrollTop = 0;
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 0) {
+                currentStep--;
+                renderAll();
+                document.getElementById("mainContent").scrollTop = 0;
+            }
+        }
+
+        function renderAll() {
+            renderSidebar();
+            const content = document.getElementById("mainContent");
+            content.innerHTML = `<div class="content-panel">${steps[currentStep].render()}</div>`;
+            updateHeaderTitle();
+            renderAiAssistant();
+        }
+
+        function updateHeaderTitle() {
+            const h = document.getElementById("headerTitle");
+            if (activityData.name.trim()) {
+                h.textContent = activityData.name.trim();
+                h.style.color = "";
+                document.title = activityData.name.trim() + " - 活动工作台";
+            } else {
+                h.textContent = "未命名活动 — 点击命名";
+                h.style.color = "var(--text-secondary)";
+                document.title = "新建活动 - 活动工作台";
+            }
+        }
+
+        function editTitleInline() {
+            const current = activityData.name.trim() || "";
+            const input = document.createElement("input");
+            input.value = current;
+            input.placeholder = "输入活动名称...";
+            input.style.cssText = "font-size:17px;font-weight:600;border:1px solid var(--primary);border-radius:8px;padding:6px 12px;width:300px;font-family:inherit;outline:none;";
+            const h = document.getElementById("headerTitle");
+            h.replaceWith(input);
+            input.focus();
+            input.select();
+            input.addEventListener("blur", () => {
+                activityData.name = input.value.trim();
+                const newH = document.createElement("h1");
+                newH.id = "headerTitle";
+                newH.onclick = editTitleInline;
+                newH.style.cursor = "pointer";
+                newH.title = "点击编辑活动名称";
+                input.replaceWith(newH);
+                updateHeaderTitle();
+                renderAll();
+            });
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") input.blur();
+                if (e.key === "Escape") { input.value = current; input.blur(); }
+            });
+        }
+
+        function goToReflection() {
+            const content = document.getElementById("mainContent");
+            content.innerHTML = `<div class="content-panel">${renderReflection()}</div>`;
+            content.scrollTop = 0;
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById("toast");
+            t.textContent = msg;
+            t.style.display = "block";
+            clearTimeout(t._timeout);
+            t._timeout = setTimeout(() => { t.style.display = "none"; }, 2500);
+        }
+
+        // ── Overview form helpers ──
+        function overviewField(field) {
+            return activityData.planSections.planOverview[field] || "";
+        }
+
+        function renderOverviewRow(label, field, placeholder, value, readonly) {
+            return `
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="width:80px;flex-shrink:0;font-size:13px;font-weight:500;color:var(--text-secondary);text-align:right;">${label}</span>
+                <input class="input" style="flex:1;" placeholder="${placeholder}"
+                       value="${esc(value || '')}"
+                       ${readonly ? 'disabled' : ''}
+                       oninput="activityData.planSections.planOverview.${field}=this.value">
+            </div>`;
+        }
+
+        function renderOverviewRow_date() {
+            const po = activityData.planSections.planOverview;
+            return `
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="width:80px;flex-shrink:0;font-size:13px;font-weight:500;color:var(--text-secondary);text-align:right;">活动时间</span>
+                <input class="input" style="width:72px;text-align:center;" placeholder="年"
+                       value="${esc(po.dateYear)}" oninput="activityData.planSections.planOverview.dateYear=this.value">
+                <span style="font-size:13px;color:var(--text-secondary);">年</span>
+                <input class="input" style="width:56px;text-align:center;" placeholder="月"
+                       value="${esc(po.dateMonth)}" oninput="activityData.planSections.planOverview.dateMonth=this.value">
+                <span style="font-size:13px;color:var(--text-secondary);">月</span>
+                <input class="input" style="width:56px;text-align:center;" placeholder="日"
+                       value="${esc(po.dateDay)}" oninput="activityData.planSections.planOverview.dateDay=this.value">
+                <span style="font-size:13px;color:var(--text-secondary);">日</span>
+            </div>`;
+        }
+
+        function renderOverviewRow_count() {
+            const po = activityData.planSections.planOverview;
+            const per = Number(po.countPerSession) || 0;
+            const ses = Number(po.sessions) || 0;
+            const total = per * ses;
+            return `
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="width:80px;flex-shrink:0;font-size:13px;font-weight:500;color:var(--text-secondary);text-align:right;">预计人数</span>
+                <input class="input" style="width:80px;text-align:center;" placeholder="人数"
+                       value="${esc(po.countPerSession)}" oninput="activityData.planSections.planOverview.countPerSession=this.value">
+                <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">人/场，共</span>
+                <input class="input" style="width:64px;text-align:center;" placeholder="场次"
+                       value="${esc(po.sessions)}" oninput="activityData.planSections.planOverview.sessions=this.value">
+                <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">场</span>
+                ${total > 0 ? `<span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">（总计 <strong style="color:var(--primary);">${total}</strong> 人）</span>` : ''}
+            </div>`;
+        }
+
+        // ═══════════════════════════════════════════════
+        // STEP 1: 输出策划案
+        // ═══════════════════════════════════════════════
+        function renderStep1() {
+            const done = completedSteps.has(0);
+            const p = activityData.planSections;
+            return `
+            <h2>📝 输出策划案</h2>
+            <p class="subtitle">在 AI 策划思路基础上，按以下六个部分完善活动策划方案。</p>
+
+            <div class="section-card">
+                <label>活动名称</label>
+                <input class="input" value="${esc(activityData.name)}" disabled>
+            </div>
+
+            <div class="section-card">
+                <h3>一、活动概述（基础信息）</h3>
+                <div style="display:flex;flex-direction:column;gap:14px;">
+                    ${renderOverviewRow("活动主题", "theme", "例：2026 秋季音乐嘉年华", p.planOverview.theme)}
+                    ${renderOverviewRow("活动名称", "name", "与上方主题保持一致或细化", activityData.name, true)}
+                    ${renderOverviewRow("活动目标", "objective", "例：提升品牌认知、促进社群互动、招募新会员", p.planOverview.objective)}
+                    ${renderOverviewRow_date()}
+                    ${renderOverviewRow("服务对象", "targetAudience", "例：18-35岁城市青年 / 3-12岁亲子家庭 / 企业HR从业者", p.planOverview.targetAudience)}
+                    ${renderOverviewRow_count()}
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h3>二、活动目的 / 意义</h3>
+                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
+                    为什么要举办这个活动？希望达成什么目标？对参与者/组织方有什么价值？
+                </p>
+                <textarea class="textarea" placeholder="例：1. 提升品牌在年轻群体中的认知度；2. 促进社区成员间的交流与连接；3. ..."
+                          oninput="activityData.planSections.purpose=this.value"
+                          style="min-height:90px;">${esc(p.purpose)}</textarea>
+            </div>
+
+            <div class="section-card">
+                <h3>三、活动内容与流程</h3>
+                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
+                    活动具体内容包括哪些环节？整体流程如何安排？各环节时长多少？
+                </p>
+                <textarea class="textarea" placeholder="例：
+【暖场环节】30min — 签到、拍照打卡、自由交流
+【开场致辞】15min — 主办方代表致欢迎辞
+【核心环节】90min — xxx
+【互动环节】30min — xxx
+【收尾总结】15min — 总结 + 合影"
+                          oninput="activityData.planSections.contentFlow=this.value"
+                          style="min-height:120px;">${esc(p.contentFlow)}</textarea>
+            </div>
+
+            <div class="section-card">
+                <h3>四、活动需求（物资 / 场地 / 宣传 / 资金）</h3>
+                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
+                    列出活动所需的各类资源：场地要求、物资清单、宣传渠道、资金预算框架。
+                </p>
+                <textarea class="textarea" placeholder="例：
+【场地】需容纳xxx人的室内/户外场地，具备xxx设施
+【物资】舞台搭建、音响设备、桌椅、宣传物料、签到用品等
+【宣传】公众号推文、社群转发、海报投放、合作媒体
+【资金】详见第三步预算案"
+                          oninput="activityData.planSections.requirements=this.value"
+                          style="min-height:120px;">${esc(p.requirements)}</textarea>
+            </div>
+
+            <div class="section-card">
+                <h3>五、执行计划与分工（行事历）</h3>
+                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
+                    按时间线列出关键节点，明确每项任务的负责人和交付物。
+                </p>
+                <textarea class="textarea" placeholder="例：
+| 时间节点 | 任务 | 负责人 | 交付物 |
+|---------|------|--------|--------|
+| T-8周 | 场地确认 | 张三 | 场地合同 |
+| T-6周 | 嘉宾邀请 | 李四 | 嘉宾确认函 |
+| T-4周 | 物料采购 | 王五 | 采购清单 |
+| T-1周 | 现场彩排 | 全员 | 彩排报告 |"
+                          oninput="activityData.planSections.execution=this.value"
+                          style="min-height:120px;">${esc(p.execution)}</textarea>
+            </div>
+
+            <div class="section-card">
+                <h3>六、风险预案（突发情况处置）</h3>
+                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
+                    识别可能出现的突发情况，制定对应的应急处理方案。
+                </p>
+                <textarea class="textarea" placeholder="例：
+【天气风险】如遇雨天，启动室内备用场地方案
+【设备故障】现场配备备用音响/投影设备，技术人员全程待命
+【人员不足】志愿者候补名单，关键岗位AB角互备
+【安全事件】设置医疗急救点，安保人员每xxx区域配置x名
+【舆情风险】指定专人负责现场舆情监控与处理"
+                          oninput="activityData.planSections.riskPlan=this.value"
+                          style="min-height:120px;">${esc(p.riskPlan)}</textarea>
+            </div>
+
+            <div class="section-card">
+                <h3>📎 附件上传（可选）</h3>
+                <p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">
+                    支持上传场地照片、参考资料、流程图等辅助文件。
+                </p>
+                <button class="btn btn-outline" onclick="showToast('附件上传功能待实现（此处可对接文件存储）')" >
+                    📤 上传附件
+                </button>
+            </div>
+
+            <div style="font-size:12px;color:var(--text-secondary);padding:0 4px;">
+                已填写：${[p.overview, p.purpose, p.contentFlow, p.requirements, p.execution, p.riskPlan].filter(Boolean).length} / 6 个部分
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-outline" onclick="prevStep()">← 上一步</button>
+                <button class="btn btn-primary btn-lg" onclick="completeStep(0)">
+                    ${done ? '✓ 已完成' : '保存策划案 →'}
+                </button>
+            </div>`;
+        }
+
+        // ═══════════════════════════════════════════════
+        // STEP 2: 编制预算案
+        // ═══════════════════════════════════════════════
+        function renderStep2() {
+            const done = completedSteps.has(1);
+            const total = activityData.budget.reduce((s, b) => s + Number(b.cost), 0);
+            return `
+            <h2>💰 编制预算案</h2>
+            <p class="subtitle">根据策划内容，逐项制定活动预算明细。</p>
+
+            <div class="section-card">
+                <h3>预算明细</h3>
+                <table class="budget-table">
+                    <thead>
+                        <tr><th>项目</th><th style="text-align:right;width:140px;">预估费用（元）</th></tr>
+                    </thead>
+                    <tbody id="budgetBody">
+                        ${activityData.budget.map((b, i) => `
+                        <tr>
+                            <td>${esc(b.item)}</td>
+                            <td class="input-cell">
+                                <input type="number" min="0" value="${b.cost}"
+                                       oninput="activityData.budget[${i}].cost=Number(this.value);renderAll()"
+                                       >
+                            </td>
+                        </tr>`).join('')}
+                        <tr class="total-row"><td>💰 合计</td><td style="text-align:right;font-weight:700;">¥ ${total.toLocaleString()}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-card">
+                <h3>预算说明</h3>
+                <textarea class="textarea" placeholder="预算编制的依据和说明（可选）..."
+                           style="min-height:80px;"></textarea>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-outline" onclick="prevStep()">← 上一步</button>
+                <button class="btn btn-primary btn-lg" onclick="completeStep(1)">
+                    ${done ? '✓ 已完成' : `确认预算（合计 ¥${total.toLocaleString()}）→`}
+                </button>
+            </div>`;
+        }
+
+        // ═══════════════════════════════════════════════
+        // STEP 3: 审批流程或导出文件
+        // ═══════════════════════════════════════════════
+        function renderStep3() {
+            const done = completedSteps.has(2);
+            return `
+            <h2>📋 审批流程或导出文件</h2>
+            <p class="subtitle">将策划案和预算案提交审批，或导出为正式文件。</p>
+
+            <div class="section-card">
+                <h3>📄 审批内容概览</h3>
+                <table style="width:100%;font-size:14px;">
+                    <tr><td style="padding:6px 0;color:var(--text-secondary);width:80px;">活动名称</td>
+                        <td><strong>${esc(activityData.name) || "（未填写）"}</strong></td></tr>
+                    <tr><td style="padding:6px 0;color:var(--text-secondary);">活动类型</td>
+                        <td>${esc(activityData.type)}</td></tr>
+                    <tr><td style="padding:6px 0;color:var(--text-secondary);">策划方案</td>
+                        <td>${activityData.planContent ? '✅ 已编写（' + activityData.planContent.length + '字）' : '⚠️ 待完善'}</td></tr>
+                    <tr><td style="padding:6px 0;color:var(--text-secondary);">预算总额</td>
+                        <td><strong>¥ ${activityData.budget.reduce((s,b)=>s+Number(b.cost),0).toLocaleString()}</strong></td></tr>
+                </table>
+            </div>
+
+            <div class="section-card">
+                <h3>📤 选择处理方式</h3>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="submitApproval()" >
+                        📨 提交审批
+                    </button>
+                    <button class="btn btn-outline" onclick="showToast('文件已导出为 PDF（模拟）')" >
+                        📥 导出 PDF
+                    </button>
+                    <button class="btn btn-outline" onclick="showToast('文件已导出为 Word（模拟）')" >
+                        📥 导出 Word
+                    </button>
+                </div>
+                <div id="approvalStatus" style="margin-top:16px;${activityData.approved ? '' : 'display:none'}">
+                    <p style="color:var(--success);font-weight:500;">✅ 审批已通过（模拟）</p>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-outline" onclick="prevStep()">← 上一步</button>
+                <button class="btn btn-primary btn-lg" onclick="completeStep(2)">
+                    ${done ? '✓ 已完成' : '确认 →'}
+                </button>
+            </div>`;
+        }
+
+        function submitApproval() {
+            activityData.approved = true;
+            showToast("📨 审批已提交并通过（模拟流程）");
+            renderAll();
+        }
+
+        // ═══════════════════════════════════════════════
+        // STEP 4: 采购Checklist
+        // ═══════════════════════════════════════════════
+        function renderStep4() {
+            const done = completedSteps.has(3);
+            const checked = activityData.checklist.filter(c => c.done).length;
+            const total = activityData.checklist.length;
+            const allDone = total > 0 && checked === total;
+            return `
+            <h2>📦 采购Checklist</h2>
+            <p class="subtitle">审批通过后，自行添加采购项目，全部勾选完成后确认。</p>
+
+            <div class="section-card">
+                <h3>采购与资源清单</h3>
+                ${total === 0 ? `<p style="text-align:center;color:var(--text-secondary);padding:20px 0;font-size:13px;">暂无项目，请在下方添加</p>` : ''}
+                <ul class="checklist">
+                    ${activityData.checklist.map((c, i) => `
+                    <li>
+                        <input type="checkbox" id="chk${i}" ${c.done ? 'checked' : ''}
+                               onchange="activityData.checklist[${i}].done=this.checked;renderAll();">
+                        <label for="chk${i}" class="${c.done ? 'item-done' : ''}">${esc(c.item)}</label>
+                        <button style="margin-left:auto;background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:13px;"
+                                onclick="activityData.checklist.splice(${i},1);renderAll();">✕</button>
+                    </li>`).join('')}
+                </ul>
+                <div style="margin-top:12px;display:flex;gap:8px;">
+                    <input class="input" id="newItem" placeholder="输入采购项目名称，如：场地租赁合同确认"
+                           style="flex:1;"
+                           onkeydown="if(event.key==='Enter')addChecklistItem()">
+                    <button class="btn btn-outline" onclick="addChecklistItem()">+ 添加</button>
+                </div>
+            </div>
+
+            <div style="font-size:13px;color:${allDone ? 'var(--success)' : 'var(--text-secondary)'};padding:0 4px;">
+                ${total === 0 ? '请至少添加一个采购项目' : `完成进度：${checked} / ${total}` + (allDone ? ' ✅ 全部完成' : '')}
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-outline" onclick="prevStep()">← 上一步</button>
+                <button class="btn btn-primary btn-lg" onclick="completeStep(3)">
+                    ${done ? '✓ 已完成' : '确认采购清单 →'}
+                </button>
+            </div>`;
+        }
+
+        function addChecklistItem() {
+            const input = document.getElementById("newItem");
+            const val = input.value.trim();
+            if (!val) return;
+            activityData.checklist.push({ item: val, done: false });
+            input.value = "";
+            showToast(`已添加：${val}`);
+            renderAll();
+        }
+
+        // ═══════════════════════════════════════════════
+        // STEP 5: 活动进度跟踪
+        // ═══════════════════════════════════════════════
+        function renderStep5() {
+            const done = completedSteps.has(4);
+            const milestones = activityData.progressItems || [
+                "策划方案定稿",
+                "场地确认 & 合同签订",
+                "嘉宾/演员确认",
+                "物资采购完成",
+                "宣传推广上线",
+                "票务/报名通道开启",
+                "现场布置完成",
+                "活动执行日",
+                "活动收尾 & 清理",
+                "总结报告提交"
+            ];
+            if (!activityData.progressItems) {
+                activityData.progressItems = milestones;
+                activityData.progressStatus = milestones.map(() => "pending");
+            }
+            const statusOpts = { pending: "⏳ 待开始", doing: "🔄 进行中", done: "✅ 已完成", stuck: "⚠️ 受阻" };
+            return `
+            <h2>📊 活动进度跟踪</h2>
+            <p class="subtitle">活动执行过程中，更新和监控各项关键里程碑的进展。</p>
+
+            <div class="section-card">
+                <h3>关键里程碑</h3>
+                <div class="progress-steps">
+                    ${activityData.progressItems.map((m, i) => `
+                    <div class="progress-step">
+                        <span style="font-size:20px;">${activityData.progressStatus[i]==='done'?'✅':activityData.progressStatus[i]==='doing'?'🔄':activityData.progressStatus[i]==='stuck'?'⚠️':'⏳'}</span>
+                        <span style="flex:1;font-size:14px;">${esc(m)}</span>
+                        <select style="font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);"
+                                onchange="activityData.progressStatus[${i}]=this.value;renderAll();"
+                                >
+                            ${Object.entries(statusOpts).map(([k,v])=>`<option value="${k}" ${activityData.progressStatus[i]===k?'selected':''}>${v}</option>`).join('')}
+                        </select>
+                    </div>`).join('')}
+                </div>
+            </div>
+
+            <div style="font-size:13px;color:var(--text-secondary);padding:0 4px;">
+                完成进度：${activityData.progressStatus.filter(s=>s==='done').length} / ${activityData.progressItems.length}
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-outline" onclick="prevStep()">← 上一步</button>
+                <button class="btn btn-primary btn-lg" onclick="completeStep(4)">
+                    ${done ? '✓ 已完成' : '更新进度 →'}
+                </button>
+            </div>`;
+        }
+
+        // ═══════════════════════════════════════════════
+        // STEP 6: 活动完成
+        // ═══════════════════════════════════════════════
+        function renderStep6() {
+            const done = completedSteps.has(5);
+            return `
+            <h2>✅ 活动完成</h2>
+            <p class="subtitle">活动正式结束后，确认并标记为完成状态。</p>
+
+            <div class="section-card" style="text-align:center;padding:40px 24px;">
+                <div style="font-size:64px;margin-bottom:16px;">🎉</div>
+                <h3>确认活动完成</h3>
+                <p style="color:var(--text-secondary);margin:12px 0 20px;line-height:1.6;">
+                    活动「${esc(activityData.name) || "未命名活动"}」已正式结束。<br>
+                    确认后，该活动将标记为完成状态，并进入复盘阶段。
+                </p>
+                <div style="display:flex;gap:12px;justify-content:center;">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input type="checkbox" id="confirmDone" style="width:18px;height:18px;accent-color:var(--primary);"
+                               onchange="document.getElementById('btnComplete').disabled=!this.checked"
+                               ${done ? 'checked' : ''}>
+                        <span style="font-size:14px;">我确认活动已全部执行完毕</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-outline" onclick="prevStep()">← 上一步</button>
+                <button class="btn btn-success btn-lg" id="btnComplete"
+                        onclick="completeStep(5)">
+                    ${done ? '✓ 已完成' : '✅ 标记为完成'}
+                </button>
+            </div>`;
+        }
+
+        // ═══════════════════════════════════════════════
+        // Reflection（选填 — 放在活动流程之外）
+        // ═══════════════════════════════════════════════
+        function renderReflection() {
+            return `
+            <h2>🪞 Reflection — 活动复盘</h2>
+            <p class="subtitle">回顾活动全过程，总结经验教训，沉淀方法论。</p>
+
+            <div class="section-card">
+                <h3>📝 复盘总结</h3>
+                <textarea class="textarea" placeholder="请从以下维度进行复盘：
+1. 目标达成情况：是否达到预期目标？关键指标如何？
+2. 亮点与成功经验：哪些环节做得好？可复制的经验有哪些？
+3. 不足与改进点：出现了哪些问题？原因是什么？如何避免？
+4. 团队协作：团队配合情况如何？沟通是否顺畅？
+5. 预算执行：实际花费与预算偏差如何？
+6. 参与者反馈：现场反应如何？收集到了哪些反馈？"
+                          style="min-height:220px;"                          oninput="activityData.reflection=this.value">${esc(activityData.reflection)}</textarea>
+            </div>
+
+            <div class="section-card">
+                <h3>⭐ 满意度自评</h3>
+                <div style="display:flex;gap:8px;" id="ratingStars">
+                    ${[1,2,3,4,5].map(n => `
+                    <span style="font-size:32px;cursor:pointer;filter:${(activityData.rating||0)>=n?'none':'grayscale(1) opacity(0.3)'};"
+                          onclick="activityData.rating=${n};renderAll();">⭐</span>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-outline" onclick="showToast('复盘记录已保存（选填）')">💾 保存复盘记录</button>
+            </div>`;
+        }
+
+        // ═══════════════════════════════════════════════
+        // STEP 7: 归档资料库
+        // ═══════════════════════════════════════════════
+        function renderStep7() {
+            const done = completedSteps.has(6);
+            const archiveItems = [
+                { name: "策划方案文档", type: "📄" },
+                { name: "预算明细表", type: "📊" },
+                { name: "审批记录", type: "📋" },
+                { name: "采购清单", type: "📦" },
+                { name: "活动照片/视频", type: "📸" },
+                { name: "复盘总结", type: "📝" },
+                { name: "参与者名单", type: "👥" },
+                { name: "宣传物料源文件", type: "🎨" }
+            ];
+            return `
+            <h2>📁 归档资料库</h2>
+            <p class="subtitle">将活动相关文档和需要保存的内容打包归入资料库。</p>
+
+            <div class="section-card">
+                <h3>待归档资料</h3>
+                <ul class="checklist">
+                    ${archiveItems.map((a, i) => `
+                    <li>
+                        <input type="checkbox" id="arc${i}" ${(activityData.archivedItems||[]).includes(i) ? 'checked' : ''}
+                               onchange="toggleArchive(${i})" >
+                        <label for="arc${i}">${a.type} ${a.name}</label>
+                    </li>`).join('')}
+                </ul>
+            </div>
+
+            <div class="section-card">
+                <h3>🏷️ 归档标签</h3>
+                <input class="input" placeholder="添加标签以便检索，如：2026、音乐节、户外..."
+                       >
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-outline" onclick="prevStep()">← 上一步</button>
+                <button class="btn btn-primary btn-lg" onclick="completeStep(6)">
+                    ${done ? '✓ 已完成' : '确认归档 →'}
+                </button>
+            </div>`;
+        }
+
+        function toggleArchive(index) {
+            if (!activityData.archivedItems) activityData.archivedItems = [];
+            const idx = activityData.archivedItems.indexOf(index);
+            if (idx > -1) activityData.archivedItems.splice(idx, 1);
+            else activityData.archivedItems.push(index);
+        }
+
+        // ═══════════════════════════════════════════════
+        // STEP 8: 获得完成徽章
+        // ═══════════════════════════════════════════════
+        function renderStep8() {
+            const done = completedSteps.has(7);
+            const badgeEarned = done || activityData.badgeEarned;
+            return `
+            <h2>🏆 获得完成徽章</h2>
+            <p class="subtitle">系统发放成就徽章，标志本次活动完美闭环。</p>
+
+            <div class="section-card">
+                <div class="badge-display">
+                    <div class="badge-icon" style="${badgeEarned ? '' : 'filter:grayscale(1);box-shadow:none;'}">
+                        ${badgeEarned ? '🏆' : '🔒'}
+                    </div>
+                    <h3 style="font-size:20px;margin-bottom:6px;">
+                        ${badgeEarned ? '恭喜获得「活动闭环」徽章！' : '距离徽章只差一步'}
+                    </h3>
+                    <p style="color:var(--text-secondary);font-size:14px;line-height:1.6;max-width:400px;margin:0 auto;">
+                        ${badgeEarned
+                            ? `活动「${esc(activityData.name) || "未命名活动"}」已走完全部流程。从策划到复盘，每一步都留下了扎实的足迹。`
+                            : '完成全部 8 个步骤后，即可解锁此成就徽章，标志活动工作流完整闭环。'}
+                    </p>
+                </div>
+            </div>
+
+            ${badgeEarned ? `
+            <div class="section-card">
+                <h3>🎯 成就统计</h3>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;text-align:center;">
+                    ${[
+                        {label:"总步骤",val:"8/8"},
+                        {label:"策划字数",val:(activityData.planContent||activityData.aiPlan||"").length+"字"},
+                        {label:"预算总额",val:"¥"+activityData.budget.reduce((s,b)=>s+Number(b.cost),0).toLocaleString()},
+                        {label:"自评评分",val:(activityData.rating||0)+"/5 ⭐"},
+                    ].map(s => `
+                    <div style="background:var(--tag-bg);border-radius:8px;padding:14px;">
+                        <div style="font-size:20px;font-weight:700;">${s.val}</div>
+                        <div style="font-size:12px;color:var(--text-secondary);">${s.label}</div>
+                    </div>`).join('')}
+                </div>
+            </div>` : ''}
+
+            <div class="btn-group">
+                <button class="btn btn-outline" onclick="prevStep()">← 上一步</button>
+                ${!badgeEarned ? `
+                <button class="btn btn-primary btn-lg" onclick="completeStep(7)">
+                    🏆 领取徽章
+                </button>` : `
+                <a href="index.html" class="btn btn-primary btn-lg" style="text-decoration:none;">
+                    ← 返回活动列表
+                </a>`}
+            </div>`;
+        }
+
+        // ── Helpers ──
+        function esc(s) {
+            if (!s) return "";
+            const el = document.createElement("span");
+            el.textContent = s;
+            return el.innerHTML;
+        }
+
+        // ── AI Planning Assistant ──
+        const aiHistoryActivities = [
+            {
+                id: "music-festival",
+                title: "夏日音乐节",
+                tags: ["音乐", "户外", "大型"],
+                summary: "户外大型活动，适合参考人流组织、摊位动线、现场安全和志愿者分工。"
+            },
+            {
+                id: "hackathon",
+                title: "秋季编程马拉松",
+                tags: ["技术", "竞赛", "团队"],
+                summary: "48 小时项目制活动，适合参考赛程安排、导师机制、评审流程和成果展示。"
+            },
+            {
+                id: "reading-salon",
+                title: "读书分享会",
+                tags: ["分享", "小型", "线下"],
+                summary: "低预算小型线下活动，适合参考破冰、讨论引导和参与者反馈收集。"
+            },
+            {
+                id: "photo-contest",
+                title: "摄影大赛",
+                tags: ["线上", "征集", "展示"],
+                summary: "周期较长的征集类活动，适合参考报名通道、作品筛选、传播节奏和归档方式。"
+            }
+        ];
+
+        function ensureAiAssistant() {
+            if (!activityData.aiAssistant) {
+                activityData.aiAssistant = {};
+            }
+            activityData.aiAssistant = {
+                floatVisible: true,
+                miniOpen: false,
+                fullscreenOpen: false,
+                ideaInput: "",
+                selectedHistoryIds: [],
+                messages: [
+                    {
+                        role: "assistant",
+                        text: "你好，我是 AI 策划助手。你可以先用一句话告诉我活动想法，我会帮你追问、评估可行性，并生成可采纳到策划案的草稿。"
+                    }
+                ],
+                feasibilityReport: null,
+                draftPlan: null,
+                isThinking: false,
+                ...activityData.aiAssistant
+            };
+            repairAiAssistantState();
+        }
+
+        function repairAiAssistantState() {
+            const ai = activityData.aiAssistant;
+            const hasLoading = Array.isArray(ai.messages) && ai.messages.some(m => m.loading);
+            ai.isThinking = !!hasLoading;
+
+            const messages = Array.isArray(ai.messages) ? ai.messages : [];
+            const lastUserIndex = messages.map(m => m.role).lastIndexOf("user");
+            const hasAssistantAfterLastUser = lastUserIndex >= 0 && messages.slice(lastUserIndex + 1).some(m => m.role === "assistant" && !m.loading);
+            if (!ai.draftPlan && hasAssistantAfterLastUser) {
+                const lastIdea = getLastUserIdea();
+                ai.draftPlan = buildAiDraftPlan(lastIdea);
+                ai.feasibilityReport = ai.feasibilityReport || buildAiFeasibilityReport(lastIdea);
+            }
+        }
+
+        function isAiThinking() {
+            ensureAiAssistant();
+            return activityData.aiAssistant.messages.some(m => m.loading);
+        }
+
+        function getLastUserIdea() {
+            const messages = activityData.aiAssistant.messages || [];
+            for (let i = messages.length - 1; i >= 0; i--) {
+                if (messages[i].role === "user") return messages[i].text || activityData.aiAssistant.ideaInput || "新活动策划";
+            }
+            return activityData.aiAssistant.ideaInput || "新活动策划";
+        }
+
+        function renderAiAssistant() {
+            ensureAiAssistant();
+            const ai = activityData.aiAssistant;
+            const floatWrap = document.getElementById("aiFloatWrap");
+            const mini = document.getElementById("aiMiniChat");
+            const fullscreen = document.getElementById("aiFullscreen");
+
+            floatWrap.style.display = ai.floatVisible ? "flex" : "none";
+            mini.classList.toggle("show", !!ai.miniOpen);
+            fullscreen.classList.toggle("show", !!ai.fullscreenOpen);
+
+            mini.innerHTML = renderAiMiniChat();
+            fullscreen.innerHTML = renderAiFullscreen();
+            scrollAiMessages();
+        }
+
+        function renderAiMiniChat() {
+            const thinking = isAiThinking();
+            return `
+            <div class="ai-chat-header">
+                <div class="ai-chat-title">
+                    <strong>AI 策划助手</strong>
+                    <span>先完善想法，再采纳到策划案</span>
+                </div>
+                <div class="ai-chat-actions">
+                    ${thinking ? '<button class="ai-icon-btn" onclick="cancelAiThinking()" title="停止生成">!</button>' : ''}
+                    <button class="ai-icon-btn" onclick="openAiFullscreen()" title="进入主界面">□</button>
+                    <button class="ai-icon-btn" onclick="closeAiMiniChat()" title="收起">×</button>
+                </div>
+            </div>
+            <div class="ai-messages" id="aiMiniMessages">${renderAiMessages()}</div>
+            <div class="ai-chat-input">
+                <textarea class="textarea" id="aiMiniInput" placeholder="例如：想办一场 AI 工具分享会，面向社团新成员..."
+                    ${thinking ? 'disabled' : ''}
+                    onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMessage('mini')}"></textarea>
+                <button class="btn btn-primary" onclick="sendAiMessage('mini')" ${thinking ? 'disabled' : ''}>${thinking ? '生成中...' : '发送'}</button>
+            </div>`;
+        }
+
+        function renderAiFullscreen() {
+            const thinking = isAiThinking();
+            return `
+            <div class="ai-full-header">
+                <div class="ai-chat-title">
+                    <strong>AI 策划助手主界面</strong>
+                    <span>对话完善活动想法，参考历史经验，生成可落入 Step 1 的拟策划案</span>
+                </div>
+                <div class="ai-chat-actions">
+                    ${thinking ? '<button class="btn btn-outline" onclick="cancelAiThinking()">停止生成</button>' : ''}
+                    <button class="btn btn-outline" onclick="applyAiDraftToPlan('fillBlank')">填入空白项</button>
+                    <button class="btn btn-primary" onclick="applyAiDraftToPlan('overwrite')">采纳到策划案</button>
+                    <button class="ai-icon-btn" onclick="closeAiFullscreen()" title="返回流程页">×</button>
+                </div>
+            </div>
+            <div class="ai-full-body">
+                <aside class="ai-side">
+                    <div class="ai-panel-title">过往对话记录</div>
+                    <p class="ai-muted" style="margin-bottom:12px;">点击任意记录，可恢复该想法对应的拟策划案和可行性评估。</p>
+                    ${renderAiConversationRecords()}
+                    <div style="border-top:1px solid var(--border);margin:16px 0;"></div>
+                    <div class="ai-panel-title">历史活动经验</div>
+                    <p class="ai-muted" style="margin-bottom:12px;">选择相似活动后，AI 会把经验转化为流程、风险和执行建议。</p>
+                    ${aiHistoryActivities.map(h => renderAiHistoryItem(h)).join("")}
+                    <div class="section-card" style="padding:14px;margin-top:16px;">
+                        <h3>当前阶段</h3>
+                        <p class="ai-muted">本阶段暂不生成预算案，只在可行性评估中提示资金压力与后续核算重点。</p>
+                    </div>
+                </aside>
+                <main class="ai-main">
+                    <div class="ai-messages" id="aiFullMessages">${renderAiMessages()}</div>
+                    <div class="ai-chat-input">
+                        <textarea class="textarea" id="aiFullInput" placeholder="继续描述你的活动想法、限制条件或想参考的历史经验..."
+                            ${thinking ? 'disabled' : ''}
+                            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMessage('full')}"></textarea>
+                        <button class="btn btn-primary" onclick="sendAiMessage('full')" ${thinking ? 'disabled' : ''}>${thinking ? '生成中...' : '发送'}</button>
+                    </div>
+                </main>
+                <aside class="ai-plan-preview">
+                    ${renderAiGeneratingPanel()}
+                    ${renderAiFeasibilityReport()}
+                    ${renderAiDraftPreview()}
+                </aside>
+            </div>`;
+        }
+
+        function renderAiHistoryItem(h) {
+            const selected = activityData.aiAssistant.selectedHistoryIds.includes(h.id);
+            return `
+            <div class="ai-history-item ${selected ? 'selected' : ''}" onclick="toggleAiHistory('${h.id}')">
+                <strong>${esc(h.title)}</strong>
+                <span>${h.tags.map(t => "#" + esc(t)).join(" ")}<br>${esc(h.summary)}</span>
+            </div>`;
+        }
+
+        function renderAiConversationRecords() {
+            const records = getAiConversationRecords();
+            if (!records.length) {
+                return `<div class="ai-conversation-empty">还没有可回溯的对话。发送第一个活动想法后，这里会自动生成记录。</div>`;
+            }
+            return records.map(record => `
+                <div class="ai-conversation-item" onclick="restoreAiConversation(${record.messageIndex})">
+                    <strong>${esc(record.title)}</strong>
+                    <span class="ai-conversation-time">${esc(record.timeText)}</span>
+                    <span class="ai-muted">${esc(record.preview)}</span>
+                </div>
+            `).join("");
+        }
+
+        function getAiConversationRecords() {
+            ensureAiAssistant();
+            const messages = activityData.aiAssistant.messages || [];
+            const records = [];
+            messages.forEach((message, index) => {
+                if (message.role !== "user") return;
+                const nextAssistant = messages.slice(index + 1).find(m => m.role === "assistant" && !m.loading);
+                records.push({
+                    messageIndex: index,
+                    title: summarizeText(message.text, 28),
+                    timeText: formatAiMessageTime(message.createdAt),
+                    preview: nextAssistant ? summarizeText(nextAssistant.text, 52) : "AI 尚未完成回复，可点击恢复这条想法继续生成。"
+                });
+            });
+            return records.reverse();
+        }
+
+        function restoreAiConversation(messageIndex) {
+            ensureAiAssistant();
+            const message = activityData.aiAssistant.messages[messageIndex];
+            if (!message || message.role !== "user") return;
+            activityData.aiAssistant.ideaInput = message.text;
+            activityData.aiAssistant.draftPlan = buildAiDraftPlan(message.text);
+            activityData.aiAssistant.feasibilityReport = buildAiFeasibilityReport(message.text);
+            saveActivityData();
+            renderAiAssistant();
+            showToast("已恢复这条对话对应的拟策划案。");
+        }
+
+        function summarizeText(text, maxLen) {
+            const clean = String(text || "").replace(/\s+/g, " ").trim();
+            if (!clean) return "未命名想法";
+            return clean.length > maxLen ? clean.slice(0, maxLen - 1) + "…" : clean;
+        }
+
+        function formatAiMessageTime(value) {
+            if (!value) return "早前记录";
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return "早前记录";
+            return date.toLocaleString("zh-CN", {
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+        }
+
+        function renderAiMessages() {
+            ensureAiAssistant();
+            return activityData.aiAssistant.messages.map(m => `
+                <div class="ai-message ${m.role === 'user' ? 'user' : 'assistant'} ${m.loading ? 'loading' : ''}">
+                    ${m.loading ? renderAiThinkingMarkup(m.text) : esc(m.text)}
+                </div>
+            `).join("");
+        }
+
+        function renderAiThinkingMarkup(text) {
+            return `
+                <span class="ai-thinking-icon"></span>
+                <span class="ai-thinking-text">
+                    ${esc(text || "DeepSeek 正在思考并生成拟策划案")}
+                    <span class="ai-thinking-dots"><span></span><span></span><span></span></span>
+                </span>`;
+        }
+
+        function renderAiGeneratingPanel() {
+            if (!isAiThinking()) return "";
+            return `
+            <div class="ai-generating-panel">
+                <span class="ai-thinking-icon"></span>
+                <span>DeepSeek 正在生成可行性评估和拟策划案。完成后会自动刷新这里的预览。</span>
+            </div>`;
+        }
+
+        function renderAiFeasibilityReport() {
+            const report = activityData.aiAssistant.feasibilityReport;
+            if (!report) {
+                return `
+                <div class="ai-panel-title">可行性评估</div>
+                <p class="ai-muted" style="margin-bottom:18px;">发送活动想法后，这里会显示评分、关键风险和落地建议。</p>`;
+            }
+            return `
+            <div class="ai-panel-title">可行性评估</div>
+            <div class="ai-report-grid">
+                <div class="ai-report-card"><strong>${report.score}</strong><span class="ai-muted">综合评分</span></div>
+                <div class="ai-report-card"><strong>${report.level}</strong><span class="ai-muted">落地难度</span></div>
+            </div>
+            ${Array.isArray(report.criteria) ? `
+            <div class="ai-preview-section">
+                <h4>评分依据</h4>
+                <p>${report.criteria.map(c => `· ${c.name}：${c.score}/20 - ${c.reason}`).join("\n")}</p>
+            </div>` : ""}
+            <div class="ai-preview-section">
+                <h4>主要风险</h4>
+                <p>${report.risks.map(r => "· " + r).join("\n")}</p>
+            </div>
+            <div class="ai-preview-section">
+                <h4>建议补充</h4>
+                <p>${report.suggestions.map(s => "· " + s).join("\n")}</p>
+            </div>`;
+        }
+
+        function renderAiDraftPreview() {
+            const draft = activityData.aiAssistant.draftPlan;
+            if (!draft) {
+                return `
+                <div class="ai-panel-title" style="margin-top:18px;">拟策划案预览</div>
+                <p class="ai-muted">AI 生成后会在这里预览。确认后可写入当前活动的策划案字段。</p>`;
+            }
+            return `
+            <div class="ai-panel-title" style="margin-top:18px;">拟策划案预览</div>
+            ${[
+                ["活动主题", draft.theme],
+                ["活动目标", draft.objective],
+                ["服务对象", draft.targetAudience],
+                ["活动目的/意义", draft.purpose],
+                ["活动内容与流程", draft.contentFlow],
+                ["活动需求", draft.requirements],
+                ["执行计划与分工", draft.execution],
+                ["风险预案", draft.riskPlan]
+            ].map(([title, body]) => `
+                <div class="ai-preview-section">
+                    <h4>${title}</h4>
+                    <p>${esc(body)}</p>
+                </div>
+            `).join("")}`;
+        }
+
+        function openAiMiniChat() {
+            ensureAiAssistant();
+            activityData.aiAssistant.floatVisible = true;
+            activityData.aiAssistant.miniOpen = true;
+            renderAiAssistant();
+        }
+
+        function closeAiMiniChat() {
+            activityData.aiAssistant.miniOpen = false;
+            renderAiAssistant();
+        }
+
+        function closeAiFloat() {
+            activityData.aiAssistant.floatVisible = false;
+            activityData.aiAssistant.miniOpen = false;
+            renderAiAssistant();
+            showToast("AI 策划助手浮标已关闭，本次刷新前不再显示。");
+        }
+
+        function openAiFullscreen() {
+            ensureAiAssistant();
+            activityData.aiAssistant.floatVisible = true;
+            activityData.aiAssistant.miniOpen = false;
+            activityData.aiAssistant.fullscreenOpen = true;
+            renderAiAssistant();
+        }
+
+        function closeAiFullscreen() {
+            activityData.aiAssistant.fullscreenOpen = false;
+            renderAiAssistant();
+        }
+
+        function cancelAiThinking() {
+            ensureAiAssistant();
+            activityData.aiAssistant.messages = activityData.aiAssistant.messages.map(m => {
+                if (!m.loading) return m;
+                return {
+                    role: "assistant",
+                    text: "已停止等待模型返回。你可以重新发送，或先使用当前本地草稿继续编辑。",
+                    createdAt: new Date().toISOString()
+                };
+            });
+            activityData.aiAssistant.isThinking = false;
+            if (!activityData.aiAssistant.draftPlan) {
+                const idea = getLastUserIdea();
+                activityData.aiAssistant.draftPlan = buildAiDraftPlan(idea);
+                activityData.aiAssistant.feasibilityReport = buildAiFeasibilityReport(idea);
+            }
+            saveActivityData();
+            renderAiAssistant();
+        }
+
+        function toggleAiHistory(id) {
+            const selected = activityData.aiAssistant.selectedHistoryIds;
+            const idx = selected.indexOf(id);
+            if (idx >= 0) selected.splice(idx, 1);
+            else selected.push(id);
+            saveActivityData();
+            renderAiAssistant();
+        }
+
+        async function sendAiMessage(source) {
+            ensureAiAssistant();
+            if (isAiThinking()) return;
+            const input = document.getElementById(source === "full" ? "aiFullInput" : "aiMiniInput");
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = "";
+
+            const ai = activityData.aiAssistant;
+            ai.isThinking = true;
+            ai.ideaInput = text;
+            ai.messages.push({ role: "user", text, createdAt: new Date().toISOString() });
+
+            const pendingIndex = ai.messages.push({
+                role: "assistant",
+                text: "已发送到本地代理，正在等待 DeepSeek 返回",
+                loading: true,
+                createdAt: new Date().toISOString()
+            }) - 1;
+            renderAiAssistant();
+            saveActivityData();
+
+            try {
+                const result = await requestDeepSeekPlan(text);
+                ai.draftPlan = normalizeAiDraftPlan(result.draftPlan || result.draft || {}, text);
+                ai.feasibilityReport = normalizeAiFeasibilityReport(result.feasibilityReport || result.report || {}, text);
+                ai.messages[pendingIndex] = {
+                    role: "assistant",
+                    text: result.reply || "DeepSeek 已生成拟策划案和可行性评估。你可以先检查右侧预览，再选择填入空白项或采纳到策划案。",
+                    createdAt: new Date().toISOString()
+                };
+            } catch (error) {
+                const draft = buildAiDraftPlan(text);
+                ai.draftPlan = draft;
+                ai.feasibilityReport = buildAiFeasibilityReport(text);
+                ai.messages[pendingIndex] = {
+                    role: "assistant",
+                    text: `DeepSeek 暂时没有返回结果，已先用本地规则生成一版草稿。原因：${error.message}`,
+                    createdAt: new Date().toISOString()
+                };
+            } finally {
+                ai.isThinking = false;
+            }
+
+            saveActivityData();
+            renderAiAssistant();
+        }
+
+        async function requestDeepSeekPlan(idea) {
+            const selectedHistory = aiHistoryActivities.filter(h => activityData.aiAssistant.selectedHistoryIds.includes(h.id));
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 25000);
+            const apiUrl = getDeepSeekApiUrl();
+            const response = await fetch(apiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                signal: controller.signal,
+                body: JSON.stringify({
+                    idea,
+                    activityName: activityData.name,
+                    currentPlan: activityData.planSections,
+                    selectedHistory,
+                    messages: activityData.aiAssistant.messages.slice(-8)
+                })
+            }).catch(error => {
+                if (error.name === "AbortError") {
+                    throw new Error(`本地代理请求超时。请求地址：${apiUrl}。请查看 PowerShell 是否打印了 DeepSeek 请求日志。`);
+                }
+                throw new Error(`无法连接本地代理。当前页面：${window.location.href}；请求地址：${apiUrl}；原始错误：${error.message}`);
+            }).finally(() => {
+                clearTimeout(timeout);
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(payload.error || `本地代理返回 HTTP ${response.status}`);
+            }
+            return payload;
+        }
+
+        function getDeepSeekApiUrl() {
+            if (window.location.protocol === "http:" || window.location.protocol === "https:") {
+                return `${window.location.origin}/api/deepseek/plan`;
+            }
+            return "http://localhost:3000/api/deepseek/plan";
+        }
+
+        function normalizeAiDraftPlan(draft, idea) {
+            const fallback = buildAiDraftPlan(idea);
+            const generatedName = isCopiedUserPrompt(draft.name, idea) ? fallback.name : draft.name;
+            const generatedTheme = isCopiedUserPrompt(draft.theme, idea) ? fallback.theme : draft.theme;
+            return {
+                ...fallback,
+                ...draft,
+                name: generatedName || fallback.name,
+                theme: generatedTheme || fallback.theme,
+                targetAudience: draft.targetAudience || draft.audience || fallback.targetAudience,
+                countPerSession: String(draft.countPerSession || fallback.countPerSession),
+                sessions: String(draft.sessions || fallback.sessions)
+            };
+        }
+
+        function isCopiedUserPrompt(value, idea) {
+            if (!value) return false;
+            const cleanValue = String(value).replace(/\s+/g, "");
+            const cleanIdea = String(idea || "").replace(/\s+/g, "");
+            return cleanValue.length > 16 && cleanIdea.includes(cleanValue);
+        }
+
+        function normalizeAiFeasibilityReport(report, idea) {
+            const fallback = buildAiFeasibilityReport(idea);
+            return {
+                score: report.score || fallback.score,
+                level: report.level || fallback.level,
+                criteria: Array.isArray(report.criteria) && report.criteria.length ? report.criteria : fallback.criteria,
+                risks: Array.isArray(report.risks) && report.risks.length ? report.risks : fallback.risks,
+                suggestions: Array.isArray(report.suggestions) && report.suggestions.length ? report.suggestions : fallback.suggestions
+            };
+        }
+
+        function buildAiDraftPlan(idea) {
+            const analysis = analyzeActivityIdea(idea);
+            const selected = aiHistoryActivities.filter(h => activityData.aiAssistant.selectedHistoryIds.includes(h.id));
+            const historyLine = selected.length
+                ? `参考历史活动经验：${selected.map(h => h.title).join("、")}。`
+                : "暂无指定历史活动参考，先按通用社团活动经验生成。";
+            const currentName = activityData.name.trim();
+            const name = currentName || analysis.name;
+            const theme = analysis.theme;
+            const safeTime = analysis.recommendedTime || "周末下午或傍晚";
+            const coreValue = analysis.valueStatement;
+            return {
+                name,
+                theme,
+                objective: analysis.objective,
+                dateYear: activityData.planSections.planOverview.dateYear || "2026",
+                dateMonth: activityData.planSections.planOverview.dateMonth || "",
+                dateDay: activityData.planSections.planOverview.dateDay || "",
+                targetAudience: analysis.targetAudience,
+                countPerSession: activityData.planSections.planOverview.countPerSession || analysis.defaultCount,
+                sessions: activityData.planSections.planOverview.sessions || "1",
+                purpose: `${coreValue}\n${historyLine}\n本活动的意义在于把社团成员的兴趣、表达和协作转化为一次可参与、可复盘、可延展的活动体验，而不是简单复述用户提出的原始问题。`,
+                contentFlow: buildContentFlow(analysis),
+                requirements: buildRequirements(analysis, safeTime),
+                execution: buildExecutionPlan(analysis, safeTime),
+                riskPlan: buildRiskPlan(analysis)
+            };
+        }
+
+        function buildAiFeasibilityReport(idea) {
+            const analysis = analyzeActivityIdea(idea);
+            const criteria = scoreFeasibility(analysis);
+            const total = criteria.reduce((sum, item) => sum + item.score, 0);
+            const level = total >= 85 ? "较低" : total >= 72 ? "中等" : total >= 58 ? "中等偏高" : "较高";
+            return {
+                score: `${total}/100`,
+                level,
+                criteria,
+                risks: analysis.risks,
+                suggestions: analysis.suggestions
+            };
+        }
+
+        function analyzeActivityIdea(idea) {
+            const text = (idea || "").trim();
+            const isCoffee = /咖啡|手冲|拿铁|美式|咖啡馆|咖啡厅/.test(text);
+            const isAlcohol = /酒|调酒|鸡尾酒|啤酒|红酒|微醺/.test(text);
+            const isStory = /故事|交换|分享|叙事/.test(text);
+            const isLateNight = /晚上|夜晚|深夜|夜间|通宵|凌晨|晚间/.test(text);
+            const isFoodDrink = isCoffee || isAlcohol || /饮品|甜品|茶|烘焙/.test(text);
+            const isCompetition = /比赛|竞赛|马拉松|挑战/.test(text);
+            const isLarge = /大型|全校|上百|千人|音乐节|晚会/.test(text);
+            const isCampus = /学校|校园|社团|同学|学生/.test(text);
+            const rawTheme = extractThemeFromIdea(text);
+            const naming = createActivityNaming(text, { isCoffee, isAlcohol, isStory, isLateNight, isFoodDrink, isCompetition, isLarge, isCampus, rawTheme });
+            const name = naming.name;
+            const theme = naming.theme;
+            const risks = [];
+            const suggestions = [];
+
+            if (isLateNight && isFoodDrink) {
+                risks.push("夜间饮品类活动容易涉及返程安全、场地开放时间、噪音管理和身体负担，不建议默认安排在晚上。");
+                suggestions.push("建议改为周五下午、周末下午或傍晚早段，并设置无咖啡因/低糖饮品选项。");
+            }
+            if (isAlcohol) {
+                risks.push("含酒精活动在校园社团场景下存在审批、安全、年龄合规和舆情风险，不能按普通社交活动处理。");
+                suggestions.push("建议改为无酒精 mocktail、饮品文化分享或故事茶话会，避开酒精供应。");
+            }
+            if (isLarge) {
+                risks.push("活动规模较大，对场地容量、安保、志愿者和应急预案要求明显提高。");
+                suggestions.push("先做 30-50 人试点版，再根据反馈扩大规模。");
+            }
+            if (!/时间|地点|人数|对象|预算|场地/.test(text)) {
+                risks.push("原始需求缺少时间、地点、人数或对象信息，落地前需要补齐基础条件。");
+                suggestions.push("先确认预计人数、目标对象、场地类型和活动时长。");
+            }
+
+            if (!risks.length) {
+                risks.push("需要进一步确认场地、人数和组织分工，避免方案停留在创意层面。");
+            }
+            if (!suggestions.length) {
+                suggestions.push("建议先做一个低成本试点版本，用签到、反馈表和复盘文档沉淀经验。");
+            }
+            suggestions.push("预算部分本阶段只提示风险，等预算案模块成型后再拆分金额。");
+
+            const recommendedTime = isLateNight && isFoodDrink ? "周五下午 15:00-17:00 或周末下午 14:00-16:00" : "周末下午或傍晚早段";
+            const targetAudience = isCampus ? "本校社团成员及对主题感兴趣的同学" : inferAudience(text);
+            const defaultCount = isLarge ? "50" : isCompetition ? "40" : "30";
+            const objective = isStory
+                ? "通过故事分享和轻量互动增强成员连接，营造安全、开放、有记忆点的社团交流场景。"
+                : `围绕“${theme}”提升成员参与度，形成一次目标清晰、流程可控、便于复盘的社团活动。`;
+            const valueStatement = isStory
+                ? "活动以故事交换为核心，价值不在于单纯消费饮品，而在于让参与者通过主题叙事建立连接、表达个人经验，并增强社团内部认同感。"
+                : `活动围绕“${theme}”展开，价值在于将成员兴趣转化为具体参与体验，并为社团后续活动沉淀组织方法。`;
+
+            return {
+                text,
+                name,
+                theme,
+                rawTheme,
+                isCoffee,
+                isAlcohol,
+                isStory,
+                isLateNight,
+                isFoodDrink,
+                isCompetition,
+                isLarge,
+                isCampus,
+                recommendedTime,
+                targetAudience,
+                defaultCount,
+                objective,
+                valueStatement,
+                risks,
+                suggestions
+            };
+        }
+
+        function buildContentFlow(analysis) {
+            if (analysis.isStory && (analysis.isCoffee || analysis.isFoodDrink)) {
+                return "1. 签到与分组：按 4-6 人小组安排座位，发放故事提示卡。\n2. 破冰引导：主持人说明“故事交换”规则，强调尊重、保密和自愿分享。\n3. 饮品体验：提供无酒精、低咖啡因或常规咖啡选项，避免把活动变成单纯消费。\n4. 故事交换：围绕“第一次尝试”“一次转折”“最近的小确幸”等主题轮流分享。\n5. 共创环节：每组提炼一个共同关键词，制作便签墙或故事地图。\n6. 收尾反馈：填写反馈表，邀请参与者写下下一次想听/想讲的主题。";
+            }
+            return "1. 签到与破冰：确认参与者信息，建立基本互动氛围。\n2. 主题导入：由负责人说明活动背景、目标和参与方式。\n3. 核心环节：围绕主题进行分享、体验、共创或分组任务。\n4. 互动反馈：设置提问、展示或投票环节，增强参与感。\n5. 收尾总结：回顾活动成果，收集反馈，并说明后续社群承接方式。";
+        }
+
+        function buildRequirements(analysis, safeTime) {
+            const base = [`建议时间：${safeTime}。`, "场地需安静、便于围坐交流，最好支持投影、音响和基础照明。", "需提前准备签到表、主持稿、流程表、反馈表和宣传文案。"];
+            if (analysis.isFoodDrink) base.push("饮品需明确成分和过敏提示，准备低糖、无咖啡因或温水等替代选项。");
+            if (analysis.isAlcohol) base.push("不建议供应酒精饮品；如保留“微醺/调酒”概念，应改为无酒精 mocktail 或饮品文化体验。");
+            base.push("预算部分暂不生成明细，后续重点核算场地、饮品物料、宣传和应急费用。");
+            return base.join("\n");
+        }
+
+        function buildExecutionPlan(analysis, safeTime) {
+            return `| 时间节点 | 任务 | 负责人 | 交付物 |\n|---------|------|--------|--------|\n| T-10 天 | 明确主题、对象、人数上限和活动时间（建议 ${safeTime}） | 策划负责人 | 活动初稿 |\n| T-7 天 | 确认场地、主持人和物资清单 | 执行负责人 | 场地确认/物资表 |\n| T-5 天 | 发布宣传与报名通道，说明活动规则和注意事项 | 宣传负责人 | 推文/海报/报名表 |\n| T-2 天 | 检查饮品/道具/设备并完成流程彩排 | 全体执行组 | 彩排记录 |\n| 活动当天 | 控制节奏、维护秩序、收集反馈 | 全体执行组 | 签到表/反馈表 |\n| T+3 天 | 完成复盘与资料归档 | 策划负责人 | 复盘文档 |`;
+        }
+
+        function buildRiskPlan(analysis) {
+            const items = [
+                "报名人数不足：提前设置二次宣传节点，并准备社群定向邀请。",
+                "现场冷场：准备故事提示卡、主持追问话术和小组讨论机制。",
+                "场地或设备异常：提前一天测试设备，并准备备用场地或无投影版本流程。",
+                "参与者反馈不足：活动结束前现场填写反馈表，避免事后回收率过低。"
+            ];
+            if (analysis.isLateNight && analysis.isFoodDrink) items.unshift("时间风险：不建议安排在深夜或过晚时段，应改为下午或傍晚早段，降低返程和身体负担风险。");
+            if (analysis.isAlcohol) items.unshift("合规风险：校园社团活动不建议供应酒精，需改为无酒精饮品体验并在宣传中明确说明。");
+            return items.map((item, i) => `${i + 1}. ${item}`).join("\n");
+        }
+
+        function scoreFeasibility(analysis) {
+            const criteria = [
+                { name: "目标清晰度", score: /故事|分享|交流|咖啡|活动|策划|比赛|讲座/.test(analysis.text) ? 17 : 12, reason: "活动主题可识别，但仍需明确参与对象和成果形式。" },
+                { name: "安全与合规", score: 18, reason: "未发现明显高危要素。" },
+                { name: "资源复杂度", score: analysis.isLarge ? 10 : analysis.isFoodDrink ? 15 : 17, reason: analysis.isFoodDrink ? "饮品和场地准备增加一定物资管理复杂度。" : "资源需求相对常规。" },
+                { name: "时间合理性", score: 17, reason: "时间可通过排期优化。" },
+                { name: "参与体验", score: analysis.isStory ? 18 : 15, reason: analysis.isStory ? "故事交换有明确互动机制，参与感较强。" : "需要进一步设计互动机制。" }
+            ];
+            if (analysis.isLateNight && analysis.isFoodDrink) {
+                criteria[1].score -= 6;
+                criteria[1].reason = "夜间饮品活动涉及返程、安全和身体负担，不宜直接通过。";
+                criteria[3].score -= 7;
+                criteria[3].reason = "原设想若放在晚上，时间合理性较弱，建议调整到下午或傍晚早段。";
+            }
+            if (analysis.isAlcohol) {
+                criteria[1].score -= 8;
+                criteria[1].reason = "含酒精设定在校园社团场景下合规风险较高。";
+            }
+            if (!/时间|地点|人数|对象|预算|场地/.test(analysis.text)) {
+                criteria[0].score -= 3;
+                criteria[2].score -= 2;
+            }
+            return criteria.map(c => ({ ...c, score: Math.max(0, Math.min(20, c.score)) }));
+        }
+
+        function extractThemeFromIdea(idea) {
+            const named = idea.match(/([A-Za-z0-9\u4e00-\u9fa5 ]{2,24}(分享会|工作坊|沙龙|讲座|比赛|竞赛|展览|晚会|活动))/);
+            if (named) {
+                let cleaned = named[1].trim();
+                for (let i = 0; i < 3; i++) {
+                    cleaned = cleaned
+                        .replace(/^(我想|想要|想办|办|举办|做|组织|策划|设计)?一?场?/, "")
+                        .replace(/^在(晚上|夜晚|下午|上午|周末|学校|校园|校内|社团|[^的]{1,12})的?/, "")
+                        .replace(/^.+?社团(策划|设计|举办|组织)?一?场?/, "")
+                        .replace(/^面向.+?的\s*/, "")
+                        .trim();
+                }
+                if (cleaned) return cleaned;
+            }
+            const short = idea.replace(/[，。,.！!？?]/g, " ").trim().split(/\s+/)[0] || "新活动策划";
+            return short.length > 18 ? short.slice(0, 18) + "活动" : short;
+        }
+
+        function createActivityNaming(text, flags) {
+            const concept = flags.rawTheme || "社团共创活动";
+            if (flags.isStory && flags.isAlcohol) {
+                return {
+                    name: "杯中故事会",
+                    theme: "以无酒精饮品为媒介的校园故事交换与社群连接活动"
+                };
+            }
+            if (flags.isStory && flags.isCoffee) {
+                return {
+                    name: "啡页故事会",
+                    theme: "以咖啡香气连接个人经历的校园故事分享活动"
+                };
+            }
+            if (flags.isCoffee) {
+                return {
+                    name: "咖啡慢谈局",
+                    theme: "围绕咖啡体验与轻社交展开的社团交流活动"
+                };
+            }
+            if (/AI|人工智能|工具/.test(text) && /分享|交流|讲/.test(text)) {
+                return {
+                    name: "AI工具实验室",
+                    theme: "面向社团成员的 AI 工具体验、分享与实践活动"
+                };
+            }
+            if (flags.isCompetition) {
+                return {
+                    name: `${trimActivitySuffix(concept)}挑战赛`,
+                    theme: `围绕${trimActivitySuffix(concept)}展开的团队协作与成果展示活动`
+                };
+            }
+            if (flags.isStory) {
+                return {
+                    name: "故事交换所",
+                    theme: "以个人叙事和小组交流促进成员连接的社团活动"
+                };
+            }
+            const clean = trimActivitySuffix(concept);
+            return {
+                name: clean.length > 10 ? `${clean.slice(0, 10)}计划` : `${clean}计划`,
+                theme: `围绕${clean}展开的社团参与体验与共创活动`
+            };
+        }
+
+        function trimActivitySuffix(value) {
+            return String(value || "社团共创")
+                .replace(/^(我想|想要|想办|想做|办|做|举办|组织|策划|设计)?一?个?场?/, "")
+                .replace(/活动$/, "")
+                .replace(/分享会$/, "分享")
+                .replace(/工作坊$/, "工作坊")
+                .trim() || "社团共创";
+        }
+
+        function inferAudience(idea) {
+            if (/新生|新成员|招新/.test(idea)) return "社团新成员及对主题感兴趣的潜在成员";
+            if (/老师|嘉宾|行业|企业/.test(idea)) return "社团成员、相关专业同学及外部嘉宾";
+            if (/亲子|社区/.test(idea)) return "社区居民及亲子家庭";
+            return "社团成员及对活动主题感兴趣的同学";
+        }
+
+        function applyAiDraftToPlan(mode) {
+            ensureAiAssistant();
+            const draft = activityData.aiAssistant.draftPlan;
+            if (!draft) {
+                showToast("请先和 AI 策划助手对话生成拟策划案。");
+                return;
+            }
+            const po = activityData.planSections.planOverview;
+            const p = activityData.planSections;
+            const write = (target, key, value) => {
+                if (mode === "overwrite" || !target[key]) target[key] = value;
+            };
+
+            if (mode === "overwrite" || !activityData.name.trim()) activityData.name = draft.name;
+            write(po, "theme", draft.theme);
+            write(po, "objective", draft.objective);
+            write(po, "dateYear", draft.dateYear);
+            write(po, "dateMonth", draft.dateMonth);
+            write(po, "dateDay", draft.dateDay);
+            write(po, "targetAudience", draft.targetAudience);
+            write(po, "countPerSession", draft.countPerSession);
+            write(po, "sessions", draft.sessions);
+            write(p, "purpose", draft.purpose);
+            write(p, "contentFlow", draft.contentFlow);
+            write(p, "requirements", draft.requirements);
+            write(p, "execution", draft.execution);
+            write(p, "riskPlan", draft.riskPlan);
+            activityData.planContent = `${draft.purpose}\n\n${draft.contentFlow}`;
+
+            saveActivityData();
+            renderAll();
+            showToast(mode === "overwrite" ? "AI 拟策划案已采纳并覆盖当前策划案。" : "AI 拟策划案已填入空白字段。");
+        }
+
+        function scrollAiMessages() {
+            setTimeout(() => {
+                ["aiMiniMessages", "aiFullMessages"].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.scrollTop = el.scrollHeight;
+                });
+            }, 0);
+        }
+
+        // ── Init: Load saved activity data ──
+        function init() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get("id");
+            if (id) {
+                const saved = localStorage.getItem("editActivity");
+                if (saved) {
+                    try {
+                        const data = JSON.parse(saved);
+                        // Map saved fields to activityData
+                        if (data.title) activityData.name = data.title;
+                        if (data.desc) activityData.planContent = data.desc;
+                        if (data.status) {
+                            // Pre-complete steps based on status
+                            if (data.status === "progress") {
+                                for (let i = 0; i <= 4; i++) completedSteps.add(i); // steps 1-5
+                            } else if (data.status === "open") {
+                                for (let i = 0; i <= 3; i++) completedSteps.add(i); // steps 1-4
+                            } else if (data.status === "draft") {
+                                completedSteps.add(0); // step 1 only
+                            }
+                        }
+                        // Load any previously saved workflow data
+                        if (data.aiPlan) activityData.aiPlan = data.aiPlan;
+                        if (data.planContent) activityData.planContent = data.planContent;
+                        if (data.planSections) activityData.planSections = data.planSections;
+                        if (data.budget) activityData.budget = data.budget;
+                        if (data.approved) activityData.approved = data.approved;
+                        if (data.checklist) activityData.checklist = data.checklist;
+                        if (data.progressItems) activityData.progressItems = data.progressItems;
+                        if (data.progressStatus) activityData.progressStatus = data.progressStatus;
+                        if (data.reflection) activityData.reflection = data.reflection;
+                        if (data.rating) activityData.rating = data.rating;
+                        if (data.archivedItems) activityData.archivedItems = data.archivedItems;
+                        if (data.badgeEarned) activityData.badgeEarned = data.badgeEarned;
+                        if (data.aiAssistant) {
+                            activityData.aiAssistant = {
+                                ...activityData.aiAssistant,
+                                ...data.aiAssistant,
+                                isThinking: false,
+                                miniOpen: false,
+                                fullscreenOpen: false
+                            };
+                        }
+                        if (data.completedSteps) {
+                            data.completedSteps.forEach(i => completedSteps.add(i));
+                        }
+                    } catch (e) { /* ignore parse errors */ }
+                }
+                const aiHistory = loadAiAssistantHistory(id);
+                if (aiHistory) {
+                    activityData.aiAssistant = {
+                        ...activityData.aiAssistant,
+                        ...aiHistory
+                    };
+                }
+            }
+        }
+
+        init();
+        renderAll();
+    </script>
+</body>
+</html>
