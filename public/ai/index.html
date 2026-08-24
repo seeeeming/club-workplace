@@ -321,11 +321,6 @@
             color: #6b7280;
         }
 
-        .status-completed {
-            background: #e6f9f1;
-            color: #059669;
-        }
-
         .status-draft {
             background: #fff7ed;
             color: #d97706;
@@ -573,7 +568,6 @@
             <span class="filter-tag" data-status="progress" onclick="setStatusFilter('progress', this)">进行中</span>
             <span class="filter-tag" data-status="open" onclick="setStatusFilter('open', this)">报名中</span>
             <span class="filter-tag" data-status="draft" onclick="setStatusFilter('draft', this)">草稿</span>
-            <span class="filter-tag" data-status="completed" onclick="setStatusFilter('completed', this)">已完成</span>
         </div>
         <button class="btn btn-primary" onclick="window.location.href='create.html'">+ 新建活动</button>
     </div>
@@ -583,7 +577,7 @@
         <span class="stat-item"><span class="stat-dot progress"></span> 进行中: <strong id="statProgress">0</strong></span>
         <span class="stat-item"><span class="stat-dot open"></span> 报名中: <strong id="statOpen">0</strong></span>
         <span class="stat-item"><span class="stat-dot draft"></span> 草稿: <strong id="statDraft">0</strong></span>
-        <span class="stat-item"><span class="stat-dot completed"></span> 已完成: <strong id="statCompleted">0</strong></span>
+        <span class="stat-item"><span class="stat-dot ended"></span> 已结束: <strong id="statEnded">0</strong></span>
     </div>
 
     <!-- ── Activity Grid ── -->
@@ -594,7 +588,116 @@
 
     <script>
         // ── Data ──
-        let activities = [];
+        let activities = [
+            {
+                id: 1,
+                title: "2026 夏日音乐节",
+                desc: "户外音乐节，包含乐队演出、美食摊位和互动游戏区域。",
+                status: "open",
+                date: "2026-08-20 ~ 2026-08-22",
+                location: "城市中央公园",
+                capacity: 5000,
+                enrolled: 2340,
+                tags: ["音乐", "户外", "大型"],
+                favorite: true
+            },
+            {
+                id: 2,
+                title: "秋季编程马拉松",
+                desc: "48小时编程竞赛，开发者组队完成挑战项目，赢取丰厚奖品。",
+                status: "open",
+                date: "2026-09-15 ~ 2026-09-17",
+                location: "创新科技中心",
+                capacity: 200,
+                enrolled: 87,
+                tags: ["技术", "竞赛", "团队"],
+                favorite: false
+            },
+            {
+                id: 3,
+                title: "亲子手工坊 — DIY风筝制作",
+                desc: "亲子互动活动，家长与孩子共同设计并制作专属风筝。",
+                status: "progress",
+                date: "2026-08-10 ~ 2026-08-31",
+                location: "社区文化馆",
+                capacity: 120,
+                enrolled: 96,
+                tags: ["亲子", "手工", "社区"],
+                favorite: true
+            },
+            {
+                id: 4,
+                title: "企业数字化转型沙龙",
+                desc: "邀请行业专家分享数字化转型实践经验，包含圆桌讨论环节。",
+                status: "draft",
+                date: "2026-10-10",
+                location: "待定",
+                capacity: 80,
+                enrolled: 0,
+                tags: ["商业", "技术", "沙龙"],
+                favorite: false
+            },
+            {
+                id: 5,
+                title: "城市夜跑挑战赛",
+                desc: "5公里夜跑活动，荧光装备、音乐助阵，适合所有年龄段。",
+                status: "ended",
+                date: "2026-07-28",
+                location: "滨江跑道",
+                capacity: 800,
+                enrolled: 632,
+                tags: ["运动", "夜跑", "城市"],
+                favorite: false
+            },
+            {
+                id: 6,
+                title: "读书分享会 —《思考，快与慢》",
+                desc: "每月一次的线下读书分享，本期书籍为卡尼曼的行为经济学经典。",
+                status: "open",
+                date: "2026-08-25",
+                location: "城市图书馆三楼",
+                capacity: 40,
+                enrolled: 28,
+                tags: ["读书", "分享", "线下"],
+                favorite: true
+            },
+            {
+                id: 7,
+                title: "摄影大赛 —「城市的角落」",
+                desc: "城市主题摄影作品征集，优秀作品将在美术馆展出一个月。",
+                status: "progress",
+                date: "2026-08-01 ~ 2026-09-15",
+                location: "线上 + 市美术馆",
+                capacity: 9999,
+                enrolled: 456,
+                tags: ["摄影", "艺术", "展览"],
+                favorite: false
+            },
+            {
+                id: 8,
+                title: "创业周末 — 从想法到原型",
+                desc: "周末创业实战营，导师带队将创意转化为可演示的产品原型。",
+                status: "draft",
+                date: "2026-09-05 ~ 2026-09-06",
+                location: "待定",
+                capacity: 60,
+                enrolled: 0,
+                tags: ["创业", "实战", "培训"],
+                favorite: false
+            },
+            {
+                id: 9,
+                title: "中秋节花灯游园会",
+                desc: "中秋节主题游园，花灯展览、猜灯谜、传统手工艺体验。",
+                status: "progress",
+                date: "2026-09-20 ~ 2026-09-22",
+                location: "老街广场",
+                capacity: 3000,
+                enrolled: 1820,
+                tags: ["节日", "传统", "游园"],
+                favorite: true
+            }
+        ];
 
         let selectedIds = new Set();
         let currentStatusFilter = "all";
@@ -604,16 +707,14 @@
             progress: "进行中",
             open: "报名中",
             draft: "草稿",
-            ended: "已结束",
-            completed: "已完成"
+            ended: "已结束"
         };
 
         const statusClass = {
             progress: "status-progress",
             open: "status-open",
             draft: "status-draft",
-            ended: "status-ended",
-            completed: "status-completed"
+            ended: "status-ended"
         };
 
         // ── Render ──
@@ -622,18 +723,14 @@
             const grid = document.getElementById("activityGrid");
 
             let filtered = activities.filter(a => {
-                const title = a.title || "";
-                const desc = a.desc || "";
-                const location = a.location || "";
-                const tags = a.tags || [];
                 const matchStatus = currentStatusFilter === "all"
-                    ? true
+                    ? a.status !== "ended"
                     : a.status === currentStatusFilter;
                 const matchSearch = !searchTerm ||
-                    title.toLowerCase().includes(searchTerm) ||
-                    desc.toLowerCase().includes(searchTerm) ||
-                    tags.some(t => String(t).toLowerCase().includes(searchTerm)) ||
-                    location.toLowerCase().includes(searchTerm);
+                    a.title.toLowerCase().includes(searchTerm) ||
+                    a.desc.toLowerCase().includes(searchTerm) ||
+                    a.tags.some(t => t.toLowerCase().includes(searchTerm)) ||
+                    a.location.toLowerCase().includes(searchTerm);
                 return matchStatus && matchSearch;
             });
 
@@ -641,55 +738,46 @@
                 grid.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-icon">📭</div>
-                        <p>${activities.length === 0 ? '还没有活动，点击右上角「+ 新建活动」开始创建' : '没有找到匹配的活动'}</p>
+                        <p>没有找到匹配的活动</p>
                     </div>`;
             } else {
                 grid.innerHTML = filtered.map(a => {
-                    const title = a.title || "未命名活动";
-                    const desc = a.desc || "";
-                    const date = a.date || "";
-                    const location = a.location || "";
-                    const tags = a.tags || [];
-                    const enrolled = Number(a.enrolled) || 0;
-                    const capacity = Number(a.capacity) || 0;
-                    const enrolledPct = capacity > 0 ? Math.round((enrolled / capacity) * 100) : 0;
-                    const hasMeta = date || location;
+                    const enrolledPct = Math.round((a.enrolled / a.capacity) * 100);
                     return `
-                    <div class="activity-card ${selectedIds.has(String(a.id)) ? 'selected' : ''}"
-                         onclick="openActivity('${a.id}')">
+                    <div class="activity-card ${selectedIds.has(a.id) ? 'selected' : ''}"
+                         onclick="openActivity(${a.id})">
                         <input type="checkbox" class="card-checkbox"
-                               ${selectedIds.has(String(a.id)) ? 'checked' : ''}
-                               onclick="event.stopPropagation();toggleSelect('${a.id}')"
+                               ${selectedIds.has(a.id) ? 'checked' : ''}
+                               onclick="event.stopPropagation();toggleSelect(${a.id})"
                                title="选择此活动">
                         <div class="card-header">
-                            <span class="card-title">${esc(title)}</span>
-                            <span class="card-status ${statusClass[a.status] || ''}">${statusLabels[a.status] || esc(a.status)}</span>
+                            <span class="card-title">${esc(a.title)}</span>
+                            <span class="card-status ${statusClass[a.status]}">${statusLabels[a.status]}</span>
                         </div>
-                        ${desc ? `<p style="font-size:13px;color:var(--text-secondary);line-height:1.5;">${esc(desc)}</p>` : ''}
-                        ${hasMeta ? `
+                        <p style="font-size:13px;color:var(--text-secondary);line-height:1.5;">
+                            ${esc(a.desc)}
+                        </p>
                         <div class="card-meta">
-                            ${date ? `<span>📅 ${esc(date)}</span>` : ''}
-                            ${location ? `<span>📍 ${esc(location)}</span>` : ''}
-                        </div>` : ''}
-                        ${tags.length ? `
+                            <span>📅 ${esc(a.date)}</span>
+                            <span>📍 ${esc(a.location)}</span>
+                        </div>
                         <div class="card-tags">
-                            ${tags.map(t => `<span class="card-tag">${esc(t)}</span>`).join('')}
-                        </div>` : ''}
+                            ${a.tags.map(t => `<span class="card-tag">${esc(t)}</span>`).join('')}
+                        </div>
                         <div class="card-footer">
-                            ${capacity > 0 ? `
                             <div class="card-progress">
-                                <span>👥 ${enrolled}/${capacity}</span>
+                                <span>👥 ${a.enrolled}/${a.capacity}</span>
                                 <div class="progress-bar">
                                     <div class="progress-bar-fill" style="width:${Math.min(enrolledPct,100)}%"></div>
                                 </div>
                                 <span>${enrolledPct}%</span>
-                            </div>` : `<span></span>`}
+                            </div>
                             <div class="card-actions">
                                 <button class="icon-btn ${a.favorite ? 'fav' : ''}"
-                                        onclick="event.stopPropagation();toggleFav('${a.id}')"
+                                        onclick="event.stopPropagation();toggleFav(${a.id})"
                                         title="收藏">${a.favorite ? '★' : '☆'}</button>
                                 <button class="icon-btn"
-                                        onclick="event.stopPropagation();showDetail('${a.id}')"
+                                        onclick="event.stopPropagation();showDetail(${a.id})"
                                         title="详情">📋</button>
                             </div>
                         </div>
@@ -709,7 +797,7 @@
 
         // ── Open / Edit Activity ──
         function openActivity(id) {
-            const a = activities.find(a => String(a.id) === String(id));
+            const a = activities.find(a => a.id === id);
             if (!a) return;
             localStorage.setItem('editActivity', JSON.stringify(a));
             window.location.href = 'create.html?id=' + id;
@@ -720,7 +808,7 @@
             document.getElementById("statProgress").textContent = activities.filter(a => a.status === "progress").length;
             document.getElementById("statOpen").textContent = activities.filter(a => a.status === "open").length;
             document.getElementById("statDraft").textContent = activities.filter(a => a.status === "draft").length;
-            document.getElementById("statCompleted").textContent = activities.filter(a => a.status === "completed").length;
+            document.getElementById("statEnded").textContent = activities.filter(a => a.status === "ended").length;
         }
 
         function updateSelectedCount() {
@@ -729,11 +817,10 @@
 
         // ── Selection ──
         function toggleSelect(id) {
-            const key = String(id);
-            if (selectedIds.has(key)) {
-                selectedIds.delete(key);
+            if (selectedIds.has(id)) {
+                selectedIds.delete(id);
             } else {
-                selectedIds.add(key);
+                selectedIds.add(id);
             }
             renderActivities();
         }
@@ -746,20 +833,16 @@
         function selectAll() {
             const searchTerm = document.getElementById("searchInput").value.toLowerCase();
             const visibleIds = activities.filter(a => {
-                const title = a.title || "";
-                const desc = a.desc || "";
-                const location = a.location || "";
-                const tags = a.tags || [];
                 const matchStatus = currentStatusFilter === "all"
-                    ? true
+                    ? a.status !== "ended"
                     : a.status === currentStatusFilter;
                 const matchSearch = !searchTerm ||
-                    title.toLowerCase().includes(searchTerm) ||
-                    desc.toLowerCase().includes(searchTerm) ||
-                    tags.some(t => String(t).toLowerCase().includes(searchTerm)) ||
-                    location.toLowerCase().includes(searchTerm);
+                    a.title.toLowerCase().includes(searchTerm) ||
+                    a.desc.toLowerCase().includes(searchTerm) ||
+                    a.tags.some(t => t.toLowerCase().includes(searchTerm)) ||
+                    a.location.toLowerCase().includes(searchTerm);
                 return matchStatus && matchSearch;
-            }).map(a => String(a.id));
+            }).map(a => a.id);
             visibleIds.forEach(id => selectedIds.add(id));
             renderActivities();
         }
@@ -774,66 +857,55 @@
 
         // ── Favorite ──
         function toggleFav(id) {
-            const a = activities.find(a => String(a.id) === String(id));
-            if (a) { a.favorite = !a.favorite; saveFavorites(); }
+            const a = activities.find(a => a.id === id);
+            if (a) a.favorite = !a.favorite;
             renderActivities();
         }
 
         // ── Detail ──
         function showDetail(id) {
-            const a = activities.find(a => String(a.id) === String(id));
+            const a = activities.find(a => a.id === id);
             if (!a) return;
-            const desc = a.desc || "";
-            const date = a.date || "";
-            const location = a.location || "";
-            const tags = a.tags || [];
-            const enrolled = Number(a.enrolled) || 0;
-            const capacity = Number(a.capacity) || 0;
-            const enrolledPct = capacity > 0 ? Math.round((enrolled / capacity) * 100) : 0;
+            const enrolledPct = Math.round((a.enrolled / a.capacity) * 100);
             const overlay = document.getElementById("detailOverlay");
             overlay.innerHTML = `
                 <div class="detail-panel">
                     <div class="detail-header">
-                        <h2>${esc(a.title || "未命名活动")}</h2>
+                        <h2>${esc(a.title)}</h2>
                         <button class="detail-close" onclick="closeDetail()">✕</button>
                     </div>
                     <div class="detail-body">
                         <div class="detail-row">
                             <span class="detail-label">状态</span>
-                            <span class="detail-value"><span class="card-status ${statusClass[a.status] || ''}">${statusLabels[a.status] || esc(a.status)}</span></span>
+                            <span class="detail-value"><span class="card-status ${statusClass[a.status]}">${statusLabels[a.status]}</span></span>
                         </div>
-                        ${desc ? `
                         <div class="detail-row">
                             <span class="detail-label">描述</span>
-                            <span class="detail-value">${esc(desc)}</span>
-                        </div>` : ''}
-                        ${date ? `
+                            <span class="detail-value">${esc(a.desc)}</span>
+                        </div>
                         <div class="detail-row">
                             <span class="detail-label">时间</span>
-                            <span class="detail-value">📅 ${esc(date)}</span>
-                        </div>` : ''}
-                        ${location ? `
+                            <span class="detail-value">📅 ${esc(a.date)}</span>
+                        </div>
                         <div class="detail-row">
                             <span class="detail-label">地点</span>
-                            <span class="detail-value">📍 ${esc(location)}</span>
-                        </div>` : ''}
-                        ${capacity > 0 ? `
+                            <span class="detail-value">📍 ${esc(a.location)}</span>
+                        </div>
                         <div class="detail-row">
                             <span class="detail-label">报名</span>
-                            <span class="detail-value">👥 ${enrolled} / ${capacity} (${enrolledPct}%)</span>
-                        </div>` : ''}
-                        ${tags.length ? `
+                            <span class="detail-value">👥 ${a.enrolled} / ${a.capacity} (${enrolledPct}%)</span>
+                        </div>
                         <div class="detail-row">
                             <span class="detail-label">标签</span>
                             <span class="detail-value">
-                                ${tags.map(t => `<span class="card-tag">${esc(t)}</span>`).join(' ')}
+                                ${a.tags.map(t => `<span class="card-tag">${esc(t)}</span>`).join(' ')}
                             </span>
-                        </div>` : ''}
+                        </div>
                         <div class="detail-actions">
-                            <button class="btn btn-primary" onclick="selectActivity('${a.id}');closeDetail();">
-                                ${selectedIds.has(String(a.id)) ? '✓ 已选择' : '选择此活动'}
+                            <button class="btn btn-primary" onclick="selectActivity(${a.id});closeDetail();">
+                                ${selectedIds.has(a.id) ? '✓ 已选择' : '选择此活动'}
                             </button>
-                            <button class="btn btn-outline" onclick="toggleFav('${a.id}');showDetail('${a.id}');">
+                            <button class="btn btn-outline" onclick="toggleFav(${a.id});showDetail(${a.id});">
                                 ${a.favorite ? '★ 已收藏' : '☆ 收藏'}
                             </button>
                             <button class="btn btn-outline" onclick="closeDetail()">关闭</button>
@@ -843,14 +915,13 @@
             overlay.style.display = "flex";
         }
 
-
         function closeDetail() {
             document.getElementById("detailOverlay").style.display = "none";
             renderActivities();
         }
 
         function selectActivity(id) {
-            selectedIds.add(String(id));
+            selectedIds.add(id);
         }
 
         // ── Batch Action ──
@@ -867,22 +938,6 @@
             alert("打开新建活动表单（此处可扩展为完整的创建表单弹窗）");
         }
 
-        // ── Favorites persistence（本地版改动：收藏跨刷新保留）──
-        function loadFavorites() {
-            try {
-                const favs = JSON.parse(localStorage.getItem("aiFavorites") || "{}");
-                activities.forEach(a => {
-                    if (typeof favs[a.id] === "boolean") a.favorite = favs[a.id];
-                });
-            } catch (e) { /* ignore */ }
-        }
-
-        function saveFavorites() {
-            const favs = {};
-            activities.forEach(a => { favs[a.id] = !!a.favorite; });
-            localStorage.setItem("aiFavorites", JSON.stringify(favs));
-        }
-
         // ── Init ──
         function loadSavedEdits() {
             // Check localStorage for any edited activity data
@@ -891,7 +946,7 @@
                 if (key === "editActivity") {
                     try {
                         const data = JSON.parse(localStorage.getItem(key));
-                        const a = activities.find(a => String(a.id) === String(data.id));
+                        const a = activities.find(a => a.id === data.id);
                         if (a && data.title) {
                             a.title = data.title;
                             a.desc = data.desc || a.desc;
@@ -901,7 +956,6 @@
                 }
             }
         }
-        loadFavorites();
         loadSavedEdits();
         renderActivities();
     </script>
