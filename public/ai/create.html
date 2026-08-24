@@ -1789,6 +1789,7 @@
                     isThinking: false,
                     miniOpen: false,
                     fullscreenOpen: false,
+                    floatVisible: true,
                     messages: Array.isArray(data.messages) && data.messages.length ? data.messages.filter(m => !m.loading) : undefined
                 };
             } catch (e) {
@@ -3219,6 +3220,10 @@
                 ...ai,
                 isThinking: false,
                 activeRequestId: null,
+                // 浮标/小窗/全屏是会话级 UI 状态，不跨会话持久化（关闭浮标仅本次有效，刷新后恢复）
+                floatVisible: true,
+                miniOpen: false,
+                fullscreenOpen: false,
                 sessions,
                 currentSessionId: current ? current.id : ai.currentSessionId,
                 messages: current ? (current.messages || []).filter(m => !m.loading) : []
@@ -3236,6 +3241,7 @@
                     isThinking: false,
                     miniOpen: false,
                     fullscreenOpen: false,
+                    floatVisible: true,
                     messages: Array.isArray(data.messages) && data.messages.length ? data.messages.filter(m => !m.loading) : undefined
                 };
             } catch (e) {
@@ -3255,6 +3261,7 @@
                     activeRequestId: null,
                     miniOpen: false,
                     fullscreenOpen: false,
+                    floatVisible: true,
                     messages: Array.isArray(ai.messages) && ai.messages.length ? ai.messages.filter(m => !m.loading) : undefined
                 };
             } catch (e) {
@@ -5484,7 +5491,12 @@
                 "先把活动从一句想法拆成可以落地的玩法。下面 3 个方向都可以继续打磨。"
             ];
             const opening = openings[stableAiVariantIndex(idea + getCurrentAiMessages().length, openings.length)];
+            // 即时可行性评分：用户一句想法 → 立刻看到打分（本地评分，不依赖 DeepSeek）
+            const scoreReport = buildAiFeasibilityReport(idea);
+            const scoreSummary = `【可行性评分】${scoreReport.score}，风险等级：${scoreReport.level}`;
             return `${opening}
+
+${scoreSummary}
 
 方案一｜${optionAName}
 核心主题：把参与者放进“${blueprint.participantRole}”的角色里，活动重点是完成一次真实体验，而不是听介绍。
@@ -5991,7 +6003,8 @@
                                 ...data.aiAssistant,
                                 isThinking: false,
                                 miniOpen: false,
-                                fullscreenOpen: false
+                                fullscreenOpen: false,
+                                floatVisible: true
                             };
                         }
                         if (data.completedSteps) {
