@@ -52,11 +52,12 @@ cd club-workplace
 | ② 资料库界面（活动档案列表/详情、上传、检索） | **`AIClub_database-main/frontend/`**（源码在 `frontend/src/`） | React |
 | ③ AI 策划助手页面（策划表单 + 右下角 AI 浮标） | **`AI+club/AI+club/create.html`** | HTML |
 
-**三个最容易踩的坑：**
+**几个最容易踩的坑：**
 
 1. **不要手动改 `public/archive/`** —— 那是资料库界面的「成品」，电脑自动生成的，你改了下次生成就被覆盖。改资料库界面只能改 `AIClub_database-main/frontend/`，改完在 `frontend/` 目录运行 `npm run build`，成品才会更新。
 2. **AI 页面有两份，要同步改** —— `AI+club/AI+club/create.html` 是源头；但平台工作台里嵌入的是另一份 `public/ai/create.html`。AI 组改界面，**两份都要改**，不然独立页面和工作台里 UI 不一样。
-3. **改完怎么看到效果**：
+3. **资料库的 `vite.config.js` 别改** —— 文件里 `base: '/archive/'` 和「构建输出到平台 public/archive」这两段是接入平台的**关键配置**。删掉后就算 build 了，平台也永远显示旧界面（已经踩过一次）。要改资料库界面只改 `frontend/src/`，`vite.config.js` 别动。
+4. **改完怎么看到效果**：
    - 平台界面：根目录运行 `npm run dev` → 浏览器开 http://localhost:5173
    - 资料库界面：在 `AIClub_database-main/frontend/` 运行 `npm run build`
    - AI 页面：直接双击打开 `create.html` 就能看
