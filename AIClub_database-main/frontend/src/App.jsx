@@ -5,6 +5,7 @@ import SearchPage from './pages/SearchPage.jsx'
 import UploadPage from './pages/UploadPage.jsx'
 import SettingsPage from './pages/SettingsPage.jsx'
 import AIPlannerPage from './pages/AIPlannerPage.jsx'
+import ReflectionKnowledgePage from './pages/ReflectionKnowledgePage.jsx'
 import {
   IconArchive,
   IconSearch,
@@ -36,6 +37,9 @@ export default function App() {
           <NavLink to="/upload">
             <IconUpload /> 上传资料
           </NavLink>
+          <NavLink to="/reflection">
+            📝 Reflection 沉淀
+          </NavLink>
           <NavLink to="/ai-planner">
             <IconSpark /> AI活动策划助手
           </NavLink>
@@ -52,6 +56,7 @@ export default function App() {
           <Route path="/activities/:id" element={<ActivityDetailPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/upload" element={<UploadPage />} />
+          <Route path="/reflection" element={<ReflectionKnowledgePage />} />
           <Route path="/ai-planner" element={<AIPlannerPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
