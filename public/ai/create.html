@@ -4404,6 +4404,11 @@
 
         init();
         renderAll();
+
+        // 嵌入模式（资料库侧栏「AI 活动策划助手」入口）：直接打开 AI 助手主界面
+        if (new URLSearchParams(window.location.search).get("embed") === "archive-planner") {
+            openAiFullscreen();
+        }
     </script>
 </body>
 </html>
