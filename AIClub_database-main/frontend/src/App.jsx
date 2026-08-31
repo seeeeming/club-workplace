@@ -5,6 +5,7 @@ import SearchPage from './pages/SearchPage.jsx'
 import UploadPage from './pages/UploadPage.jsx'
 import SettingsPage from './pages/SettingsPage.jsx'
 import AIPlannerPage from './pages/AIPlannerPage.jsx'
+import ReflectionKnowledgePage from './pages/ReflectionKnowledgePage.jsx'
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
           </NavLink>
           <NavLink to="/search">🔍 资料检索</NavLink>
           <NavLink to="/upload">📤 上传资料</NavLink>
+          <NavLink to="/reflection">📝 Reflection 沉淀</NavLink>
           <NavLink to="/ai-planner">🤖 AI活动策划助手</NavLink>
           <NavLink to="/settings">⚙️ 设置</NavLink>
         </nav>
@@ -28,6 +30,7 @@ export default function App() {
           <Route path="/activities/:id" element={<ActivityDetailPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/upload" element={<UploadPage />} />
+          <Route path="/reflection" element={<ReflectionKnowledgePage />} />
           <Route path="/ai-planner" element={<AIPlannerPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>

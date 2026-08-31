@@ -1,8 +1,8 @@
 /** 活动评分（1~5 星） */
 export type ActivityRating = 1 | 2 | 3 | 4 | 5
 
-/** 知识沉淀的类型 */
-export type KnowledgeType = 'experience' | 'risk'
+/** 知识沉淀的类型（experience 经验 / risk 风险 / process 流程记录） */
+export type KnowledgeType = 'experience' | 'risk' | 'process'
 
 /** 一条沉淀后的知识条目 */
 export interface KnowledgeItem {

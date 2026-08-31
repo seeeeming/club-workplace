@@ -28,6 +28,7 @@ function fmtDate(iso) {
 const TYPE_META = {
   experience: { label: '📚 经验', color: '#4f6ef7', bg: '#eef1ff' },
   risk: { label: '⚠️ 风险', color: '#b45309', bg: '#fef3e2' },
+  process: { label: '🗂️ 流程记录', color: '#16a34a', bg: '#e7f6ec' },
 }
 
 export default function ReflectionKnowledgePage() {
@@ -51,6 +52,7 @@ export default function ReflectionKnowledgePage() {
   const counts = {
     experience: knowledge.filter((k) => k.type === 'experience').length,
     risk: knowledge.filter((k) => k.type === 'risk').length,
+    process: knowledge.filter((k) => k.type === 'process').length,
   }
 
   const chipStyle = (active) => ({
@@ -80,6 +82,9 @@ export default function ReflectionKnowledgePage() {
         </button>
         <button style={chipStyle(filter === 'risk')} onClick={() => setFilter('risk')}>
           ⚠️ 风险（{counts.risk}）
+        </button>
+        <button style={chipStyle(filter === 'process')} onClick={() => setFilter('process')}>
+          🗂️ 流程记录（{counts.process}）
         </button>
       </div>
 

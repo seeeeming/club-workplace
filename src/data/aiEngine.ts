@@ -4,9 +4,9 @@ import type { ActivityRating, KnowledgeItem, KnowledgeType, ReflectionQA } from 
  * ============ Reflection 引导引擎 ============
  *
  * 结构化 4 步引导复盘（按评分调整主次）：
- *   1. 回到现场 —— 个人经历，进活动存档（不进知识库）
+ *   1. 还原过程 —— 按环节记录活动怎么一步步办下来（选填，可跳过）→ 流程记录
  *   2. 主次一：高分问「做得好的」/ 低分问「没达预期的」（→ 成功经验 / 经验教训）
- *   3. 主次二：高分问「想改进的」/ 低分找「做得好的」（→ 改进建议）
+ *   3. 主次二：高分问「还能更好」/ 低分找「做得好的」（→ 改进建议 / 成功经验）
  *   4. 传承精华 —— 一句话传给下一任社长（→ 传承经验）
  *
  * 接入真实大模型时，把 guidedSteps() 替换成 AI 生成问题、distillExperience()
@@ -21,10 +21,12 @@ export interface GuidedStep {
   label: string
   /** 问题文案 */
   question: string
-  /** 回答性质：activity 只进活动存档；experience 进知识库 */
+  /** 回答性质：activity 记活动过程（同时沉淀为流程记录）；experience 提炼进知识库 */
   kind: 'activity' | 'experience'
   /** 进知识库后的条目类型（kind=experience 时有效） */
   knowledgeType?: KnowledgeType
+  /** 是否选填（可跳过），如第 1 步「还原过程」 */
+  optional?: boolean
   /** 内容前缀（如「成功经验」「改进建议」「传承经验」） */
   prefix?: string
 }
@@ -44,9 +46,11 @@ export function guidedSteps(rating: ActivityRating): GuidedStep[] {
   return [
     {
       step: 1,
-      label: '回到现场',
+      label: '还原过程',
       kind: 'activity',
-      question: '这次活动从开始到结束，有没有让你印象最深的一件事，或一个瞬间？',
+      optional: true,
+      question:
+        '你还记得这次活动是怎么一步步办下来的吗？从策划、准备到现场、收尾，哪个环节都行——你做了什么都写下来，想起来多少写多少。这些会成为「流程记录」，留给以后办活动的人参考。',
     },
     {
       step: 2,
@@ -55,18 +59,18 @@ export function guidedSteps(rating: ActivityRating): GuidedStep[] {
       knowledgeType: good ? 'experience' : 'risk',
       prefix: good ? '成功经验' : '经验教训',
       question: good
-        ? '你觉得这次活动里，哪一部分做得特别好、值得以后照着做？'
-        : '你觉得这次活动里，哪一部分没达到你的预期？',
+        ? '你觉得这次活动里，哪个环节做得特别好、值得以后照着做？'
+        : '你觉得这次活动里，哪个环节没达到你的预期？',
     },
     {
       step: 3,
-      label: good ? '想改进的' : '做得好的',
+      label: good ? '还能更好' : '做得好的',
       kind: 'experience',
       knowledgeType: good ? 'risk' : 'experience',
       prefix: good ? '改进建议' : '成功经验',
       question: good
-        ? '那如果重来一次，有没有哪一处你会换一种做法？'
-        : '那有没有哪怕一点，你觉得做得还不错、可以保留下来的？',
+        ? '那有没有哪个环节，你觉得下次还能做得更好？'
+        : '那有没有哪个环节，你觉得做得还不错、可以保留下来？',
     },
     {
       step: 4,
@@ -80,8 +84,8 @@ export function guidedSteps(rating: ActivityRating): GuidedStep[] {
 }
 
 /**
- * 把每步回答提炼成知识条目（Step 3 展示、确认后保存）。
- * 只提炼 experience 部分；个人经历（第 1 步）只进活动存档，不进知识库。
+ * 把每步回答提炼成知识条目（整理页展示、确认后保存）。
+ * 第 1 步「还原过程」→ 流程记录（process，不加前缀）；其余步骤 → 经验/风险。
  * 类型由步骤决定，不再靠关键词猜测。
  */
 export function distillExperience(
@@ -91,10 +95,14 @@ export function distillExperience(
   const items: Array<{ content: string; type: KnowledgeType }> = []
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i]
-    if (step.kind !== 'experience') continue
     const text = (answers[i] ?? '').trim()
     if (!text) continue
-    items.push(buildItem(step, text))
+    if (step.kind === 'activity') {
+      // 第 1 步：按环节记录的活动过程，作为「流程记录」沉淀，不加前缀
+      items.push({ content: tidy(text), type: 'process' })
+    } else {
+      items.push(buildItem(step, text))
+    }
   }
   return items
 }

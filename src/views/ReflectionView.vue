@@ -30,7 +30,7 @@ const currentStep = computed(() => steps.value[stepIndex.value])
 const draft = ref('')
 const thinking = ref(false)
 
-// Step 3 整理提炼（只提炼经验部分）
+// 整理页：提炼出的知识条目（流程记录 / 经验 / 风险）
 const distilled = ref<Array<{ content: string; type: KnowledgeType }>>([])
 
 // 完成反馈
@@ -58,10 +58,10 @@ function goToGuided() {
   phase.value = 'guided'
 }
 
-/** 提交当前步的回答 */
-function submitAnswer() {
+/** 提交当前步的回答（skip=true 表示跳过选填步，如第 1 步还原过程） */
+function submitAnswer(skip = false) {
   const text = draft.value.trim()
-  if (!text) return
+  if (!text && !skip) return
 
   answers.value[stepIndex.value] = text
   draft.value = ''
@@ -224,10 +224,17 @@ function viewProfile() {
               class="answer-input"
               rows="2"
               :placeholder="currentStep?.question ?? ''"
-              @keydown.enter.exact.prevent="submitAnswer"
+              @keydown.enter.exact.prevent="submitAnswer()"
             />
             <div class="input-actions">
-              <button class="btn btn-primary" :disabled="!draft.trim()" @click="submitAnswer">
+              <button
+                v-if="currentStep?.optional"
+                class="btn btn-ghost"
+                @click="submitAnswer(true)"
+              >
+                跳过这个问题 →
+              </button>
+              <button class="btn btn-primary" :disabled="!draft.trim()" @click="submitAnswer()">
                 发送 →
               </button>
             </div>
@@ -236,10 +243,10 @@ function viewProfile() {
         </div>
       </section>
 
-      <!-- Step 3：AI 整理内容（只提炼经验，用户确认后保存） -->
+      <!-- 整理页：AI 整理内容（流程记录 + 经验/风险，用户确认后保存） -->
       <section v-else-if="phase === 'summary'" class="phase">
         <AiBubble>
-          我已经从你的回答里提炼出可沉淀的<b>经验</b>了（你的个人经历保留在活动记录中，不会进入知识库）。以下是提炼结果，你可以编辑、增删、确认后保存。
+          我已经把你的复盘整理好了。第 1 问的「流程记录」连同学到的<b>经验</b>、风险提醒一起保存——以后的人可以从资料库「Reflection 沉淀」里看到这场活动是怎么一步步办下来的。以下是整理结果，你可以编辑、增删、确认后保存。
         </AiBubble>
 
         <div class="distill-list">
@@ -248,6 +255,7 @@ function viewProfile() {
               <select v-model="item.type" class="type-select" @change="updateItem(i, { type: item.type })">
                 <option value="experience">📚 经验</option>
                 <option value="risk">⚠️ 风险</option>
+                <option value="process">🗂️ 流程记录</option>
               </select>
               <button class="item-remove" @click="removeItem(i)">✕</button>
             </div>
