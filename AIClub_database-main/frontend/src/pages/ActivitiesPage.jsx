@@ -2,6 +2,18 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createActivity, fetchActivities } from '../api'
 import { ACTIVITY_TYPES } from '../constants'
+import { IconArchive, IconCalendar, IconPlus } from '../components/Icons.jsx'
+
+// 根据活动类型返回对应的顶部视觉区 class 与类型标签 class
+function typeClass(type) {
+  switch (type) {
+    case '百团大战': return 'baituan'
+    case '社团文化节': return 'festival'
+    case '周常活动': return 'weekly'
+    case '创新活动': return 'innovate'
+    default: return 'other'
+  }
+}
 
 export default function ActivitiesPage() {
   const [activities, setActivities] = useState([])
@@ -60,7 +72,7 @@ export default function ActivitiesPage() {
           <p className="page-desc">查看社团过去举办过的所有活动</p>
         </div>
         <button className="btn" onClick={() => setShowCreate(!showCreate)}>
-          ＋ 新建活动档案
+          <IconPlus /> 新建活动档案
         </button>
       </div>
 
@@ -92,7 +104,7 @@ export default function ActivitiesPage() {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label className="label">活动类型（单选）*</label>
+              <label className="label">活动类型 *</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {ACTIVITY_TYPES.map((type) => (
                   <label
@@ -123,31 +135,48 @@ export default function ActivitiesPage() {
 
       {activities.length === 0 ? (
         <div className="empty-state">
-          <div className="icon">🗂️</div>
-          <p>暂无活动档案，点击"新建活动档案"开始创建</p>
+          <div className="icon">
+            <IconArchive width={28} height={28} />
+          </div>
+          <div className="empty-title">暂无活动档案</div>
+          <div className="empty-desc">点击"新建活动档案"开始创建</div>
         </div>
       ) : (
         <div className="activity-grid">
-          {activities.map((a) => (
-            <div
-              key={a.id}
-              className="activity-card"
-              onClick={() => navigate(`/activities/${a.id}`)}
-            >
-              <h3>{a.name}</h3>
-              <div className="meta">
-                <span>📅 {a.date || '未设置时间'}</span>
-                {(a.activity_types && a.activity_types.length > 0
-                  ? a.activity_types
-                  : a.type
-                    ? [a.type]
-                    : []
-                ).map((t) => (
-                  <span key={t} className="type-badge">{t}</span>
-                ))}
+          {activities.map((a, idx) => {
+            const types = a.activity_types && a.activity_types.length > 0
+              ? a.activity_types
+              : a.type
+                ? [a.type]
+                : []
+            const primary = types[0] || '其他'
+            const tc = typeClass(primary)
+            return (
+              <div
+                key={a.id}
+                className="activity-card"
+                tabIndex={0}
+                onClick={() => navigate(`/activities/${a.id}`)}
+              >
+                <span className="hang left" />
+                <span className="hang right" />
+                <div className={`card-cover cover-${tc}`}>
+                </div>
+                <div className="card-body">
+                  <h3>{a.name}</h3>
+                  <div className="meta">
+                    <IconCalendar />
+                    <span>{a.date || '未设置时间'}</span>
+                  </div>
+                  <div className="card-tags">
+                    {types.map((t) => (
+                      <span key={t} className={`type-badge t-${typeClass(t)}`}>{t}</span>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

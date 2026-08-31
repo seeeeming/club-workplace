@@ -7,6 +7,14 @@ import {
   previewFileUrl,
   searchMaterials,
 } from '../api'
+import {
+  IconCalendar,
+  IconClose,
+  IconDownload,
+  IconEye,
+  IconFile,
+  IconSearch,
+} from '../components/Icons.jsx'
 
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg']
 
@@ -67,7 +75,9 @@ export default function SearchPage() {
           onChange={(e) => setKeyword(e.target.value)}
           onKeyDown={handleKeyDown}
         />
-        <button className="btn" onClick={handleSearch}>🔍 搜索</button>
+        <button className="btn" onClick={handleSearch}>
+          <IconSearch /> 搜索
+        </button>
       </div>
 
       <div className="filters">
@@ -100,15 +110,21 @@ export default function SearchPage() {
 
       {!loading && total === 0 && (
         <div className="empty-state">
-          <div className="icon">🔍</div>
-          <p>未找到匹配的资料，请尝试其他关键词</p>
+          <div className="icon">
+            <IconSearch width={28} height={28} />
+          </div>
+          <div className="empty-title">未找到匹配的资料</div>
+          <div className="empty-desc">请尝试其他关键词</div>
         </div>
       )}
 
       {results.map((m) => (
         <div key={m.id} className="material-item">
           <div className="info">
-            <div className="name">📄 {m.optimized_name}</div>
+            <div className="name">
+              <IconFile width={15} height={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--text-weak)' }} />
+              {m.optimized_name}
+            </div>
             <div className="sub">
               <span style={{ marginRight: 12 }}>类型：{m.file_type || '未分类'}</span>
               <span style={{ marginRight: 12 }}>
@@ -124,7 +140,10 @@ export default function SearchPage() {
                   {m.activity_name}
                 </a>
               </span>
-              <span style={{ marginRight: 12 }}>📅 {m.activity_date || '未知时间'}</span>
+              <span style={{ marginRight: 12, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <IconCalendar width={13} height={13} style={{ color: 'var(--text-weak)' }} />
+                {m.activity_date || '未知时间'}
+              </span>
               {(m.activity_types || []).map((t) => (
                 <span key={t} className="type-badge">{t}</span>
               ))}
@@ -135,12 +154,12 @@ export default function SearchPage() {
           </div>
           <div className="actions">
             {isImage(m.optimized_name) && (
-              <button className="btn secondary" onClick={() => setPreview(m)}>
-                👁️ 预览
+              <button className="icon-btn" title="预览" onClick={() => setPreview(m)}>
+                <IconEye />
               </button>
             )}
-            <a className="btn ghost" href={downloadFileUrl(m.id)} download>
-              ⬇️ 下载
+            <a className="icon-btn" title="下载" href={downloadFileUrl(m.id)} download>
+              <IconDownload />
             </a>
           </div>
         </div>
@@ -148,7 +167,9 @@ export default function SearchPage() {
 
       {preview && (
         <div className="preview-modal" onClick={() => setPreview(null)}>
-          <button className="close" onClick={() => setPreview(null)}>×</button>
+          <button className="close" onClick={() => setPreview(null)}>
+            <IconClose />
+          </button>
           <img src={previewFileUrl(preview.id)} alt={preview.optimized_name} onClick={(e) => e.stopPropagation()} />
         </div>
       )}

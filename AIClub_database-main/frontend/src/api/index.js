@@ -51,6 +51,13 @@ export const previewFileUrl = (id) => `/api/files/${id}/preview`
 
 export const deleteMaterial = (id) => client.delete(`/files/${id}`).then((r) => r.data)
 
+// ---------- 压缩包预览 ----------
+export const fetchArchiveList = (id) =>
+  client.get(`/files/${id}/archive`).then((r) => r.data)
+
+export const archiveEntryUrl = (id, path) =>
+  `/api/files/${id}/archive/entry?path=${encodeURIComponent(path)}`
+
 // ---------- Setting ----------
 export const fetchDeletedMaterials = () =>
   client.get('/settings/recycle-bin/materials').then((r) => r.data)

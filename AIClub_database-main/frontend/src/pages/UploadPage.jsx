@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { analyzeUpload, confirmUpload, createActivity, fetchActivities } from '../api'
 import { ACTIVITY_TYPES } from '../constants'
+import { IconCheck, IconPlus, IconSpark } from '../components/Icons.jsx'
 
 export default function UploadPage() {
   const [activities, setActivities] = useState([])
@@ -126,8 +127,9 @@ export default function UploadPage() {
       {message.text && <div className={`alert ${message.type}`}>{message.text}</div>}
 
       {/* Step 1: 选择文件 */}
-      <div className="card" style={{ marginBottom: 20 }}>
-        <h3 style={{ marginBottom: 12 }}>Step 1 · 选择文件</h3>
+      <div className="step-card">
+        <span className="step-label">STEP 1</span>
+        <h3 style={{ marginBottom: 12 }}>选择文件</h3>
         <input type="file" onChange={handleFileChange} />
         {file && (
           <p style={{ marginTop: 12, fontSize: 14, color: 'var(--text-secondary)' }}>
@@ -137,8 +139,9 @@ export default function UploadPage() {
       </div>
 
       {/* Step 2: 选择所属活动 */}
-      <div className="card" style={{ marginBottom: 20 }}>
-        <h3 style={{ marginBottom: 12 }}>Step 2 · 选择资料所属活动</h3>
+      <div className="step-card">
+        <span className="step-label">STEP 2</span>
+        <h3 style={{ marginBottom: 12 }}>选择资料所属活动</h3>
         <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 12 }}>
           <select
             className="select"
@@ -164,7 +167,8 @@ export default function UploadPage() {
               setSelectedActivityId('')
             }}
           >
-            {showNewActivity ? '取消新建' : '＋ 创建新活动档案'}
+            <IconPlus />
+            {showNewActivity ? '取消新建' : '创建新活动档案'}
           </button>
         </div>
         {showNewActivity && (
@@ -193,7 +197,7 @@ export default function UploadPage() {
               </div>
             </div>
             <div>
-              <label className="label">活动类型（单选）*</label>
+              <label className="label">活动类型 *</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {ACTIVITY_TYPES.map((type) => (
                   <label
@@ -217,26 +221,17 @@ export default function UploadPage() {
       </div>
 
       {/* Step 3: AI 分析 */}
-      <div className="card" style={{ marginBottom: 20 }}>
-        <h3 style={{ marginBottom: 12 }}>Step 3 · AI 自动整理</h3>
+      <div className="step-card">
+        <span className="step-label">STEP 3</span>
+        <h3 style={{ marginBottom: 12 }}>AI 自动整理</h3>
         <button
           className="btn"
           onClick={handleAnalyze}
           disabled={!file || !isActivityReady() || analyzing}
         >
-          {analyzing ? 'AI 分析中...' : '🤖 开始 AI 分析'}
+          <IconSpark />
+          {analyzing ? 'AI 分析中...' : '开始 AI 分析'}
         </button>
-        {(!file || !isActivityReady()) && (
-          <p style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
-            请先完成 Step 1 选择文件、Step 2 选择所属活动，再点击上方按钮进行 AI 分析。
-          </p>
-        )}
-        {file && isActivityReady() && (
-          <p style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
-            已满足 Step 1 与 Step 2，点击上方按钮即可让 AI 识别并生成标签。
-          </p>
-        )}
-
         {aiResult && (
           <div style={{ marginTop: 20, background: 'var(--primary-light)', padding: 16, borderRadius: 8 }}>
             <h4 style={{ marginBottom: 12, color: 'var(--primary)' }}>AI 整理建议（可修改）</h4>
@@ -266,7 +261,8 @@ export default function UploadPage() {
               />
             </div>
             <button className="btn" onClick={handleConfirm} disabled={uploading}>
-              {uploading ? '归档中...' : '✅ 确认并归档'}
+              <IconCheck />
+              {uploading ? '归档中...' : '确认并归档'}
             </button>
           </div>
         )}

@@ -9,6 +9,7 @@ import {
   restoreMaterial,
   updateMemberRole,
 } from '../api'
+import { IconRestore, IconTrash, IconUser } from '../components/Icons.jsx'
 
 export default function SettingsPage() {
   const [tab, setTab] = useState('recycle')
@@ -82,18 +83,12 @@ export default function SettingsPage() {
 
       {message.text && <div className={`alert ${message.type}`}>{message.text}</div>}
 
-      <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
-        <button
-          className={tab === 'recycle' ? 'btn' : 'btn ghost'}
-          onClick={() => setTab('recycle')}
-        >
-          🗑️ 最近删除
+      <div className="tabs">
+        <button className={tab === 'recycle' ? 'active' : ''} onClick={() => setTab('recycle')}>
+          最近删除
         </button>
-        <button
-          className={tab === 'members' ? 'btn' : 'btn ghost'}
-          onClick={() => setTab('members')}
-        >
-          👥 成员权限
+        <button className={tab === 'members' ? 'active' : ''} onClick={() => setTab('members')}>
+          成员权限
         </button>
       </div>
 
@@ -118,10 +113,10 @@ export default function SettingsPage() {
                     <td>{a.date}</td>
                     <td>
                       <button className="btn secondary" style={{ marginRight: 8 }} onClick={() => handleRestoreActivity(a.id)}>
-                        恢复
+                        <IconRestore /> 恢复
                       </button>
                       <button className="btn danger" onClick={() => handlePermanentDeleteActivity(a.id)}>
-                        永久删除
+                        <IconTrash /> 永久删除
                       </button>
                     </td>
                   </tr>
@@ -149,10 +144,10 @@ export default function SettingsPage() {
                     <td>{m.file_type}</td>
                     <td>
                       <button className="btn secondary" style={{ marginRight: 8 }} onClick={() => handleRestoreMaterial(m.id)}>
-                        恢复
+                        <IconRestore /> 恢复
                       </button>
                       <button className="btn danger" onClick={() => handlePermanentDeleteMaterial(m.id)}>
-                        永久删除
+                        <IconTrash /> 永久删除
                       </button>
                     </td>
                   </tr>
@@ -177,7 +172,12 @@ export default function SettingsPage() {
             <tbody>
               {members.map((m) => (
                 <tr key={m.id}>
-                  <td>{m.username}</td>
+                  <td>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <IconUser width={16} height={16} style={{ color: 'var(--text-weak)' }} />
+                      {m.username}
+                    </span>
+                  </td>
                   <td>
                     <span className="tag">{m.role === 'admin' ? '管理员' : '普通成员'}</span>
                   </td>
