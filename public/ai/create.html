@@ -1202,6 +1202,40 @@
             box-shadow: 0 0 0 3px rgba(239,68,68,0.10) !important;
         }
 
+        /* ── 未完成必填项定位：高亮 + 悬浮导航按钮 ── */
+        .field-missing {
+            border-color: var(--danger) !important;
+            box-shadow: 0 0 0 3px rgba(239,68,68,0.18) !important;
+            animation: fieldMissingPulse 1.2s ease-in-out 2;
+        }
+        @keyframes fieldMissingPulse {
+            0%, 100% { box-shadow: 0 0 0 3px rgba(239,68,68,0.15); }
+            50% { box-shadow: 0 0 0 7px rgba(239,68,68,0.32); }
+        }
+        .missing-nav {
+            position: fixed;
+            bottom: 84px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 300;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 999px;
+            background: var(--danger);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(239,68,68,0.35);
+            font-family: inherit;
+            animation: missingNavIn 0.25s ease;
+        }
+        @keyframes missingNavIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        .missing-nav:hover { filter: brightness(1.06); }
+
         /* ── 场地实景/规划图插入图片 ── */
         .fp-box {
             border: 1px dashed var(--border); border-radius: 8px; padding: 6px;
@@ -1275,6 +1309,11 @@
 
     <!-- Toast -->
     <div id="toast" class="toast" style="display:none"></div>
+
+    <!-- 未完成必填项导航：点击按页面顺序依次跳转到下一处未填 -->
+    <button id="missingNav" class="missing-nav" onclick="jumpToNextMissing()" style="display:none;">
+        ⏭ 下一处未填 <span id="missingNavCount"></span>
+    </button>
 
     <!-- AI Planning Assistant -->
     <div class="ai-float-wrap" id="aiFloatWrap">
@@ -1611,9 +1650,151 @@
             }
         }
 
+        // ── 未完成定位：跳到第一处未填 + 悬浮按钮按顺序依次跳转 ──
+        let missingCursor = { step: -1, lastKey: "" };
+
+        /** 按页面顺序收集当前步骤所有未满足的必填项 */
+        function getMissingFields(index) {
+            const p = activityData.planSections;
+            const q = (key) => document.querySelector(`#mainContent [data-field="${key}"]`);
+            const missing = [];
+            const push = (key, label, hint) => {
+                const el = q(key);
+                if (el) missing.push({ key, label, hint, el });
+            };
+            switch (index) {
+                case 0: // 输出策划案 — 必填：活动名称、主题、目的、时间、地点、目标人数、执行方案、应急预案
+                    if (!(activityData.name || "").trim()) push("plan.name", "活动名称", "填写活动正式名称");
+                    if (!(p.theme || "").trim()) push("plan.theme", "核心主题", "一句话凝练活动主题");
+                    if (!(p.objective || "").trim()) push("plan.objective", "核心目标", "说明希望达成的主要效果");
+                    if (!(p.dateTime || "").trim()) push("plan.dateTime", "活动时间", "填写举办时间");
+                    if (!(p.location || "").trim()) push("plan.location", "预计地点", "填写具体场地名称");
+                    if (!(p.targetCount || "").trim()) push("plan.targetCount", "目标人数", "填写预计参与人数");
+                    if (!(p.executionPlan || []).some(r => (r.time || "").trim() || (r.name || "").trim()))
+                        push("plan.executionPlan", "活动执行方案", "至少填写一个环节");
+                    if (!(p.emergencyPlan || []).some(r => (r.response || "").trim()))
+                        push("plan.emergencyPlan", "应急预案", "至少填写一项应对措施");
+                    break;
+                case 1: { // 编制预算案 — 必填：组织名称、活动负责人、有效预算明细、审批栏三项
+                    if (!(activityData.organizationName || "").trim()) push("budget.org", "学生组织名称", "填写社团/组织全称");
+                    if (!(activityData.activityLeader || "").trim()) push("budget.leader", "活动负责人及联系方式", "填写姓名 + 手机号/微信号");
+                    (activityData.budget || []).forEach((b, i) => {
+                        const touched = (b.name || "").trim() || String(b.unitPrice ?? "").trim() || String(b.quantity ?? "").trim();
+                        if (!touched) return;
+                        const priceOk = budgetPriceValid(b.unitPrice);
+                        const qtyOk = budgetQtyValid(b.quantity);
+                        if (!priceOk || !qtyOk) {
+                            push(!priceOk ? `budget.price.${i}` : `budget.qty.${i}`,
+                                `预算明细第 ${i + 1} 行`,
+                                !priceOk ? "单价需为不小于 0 的数字" : "数量需为不小于 0 的整数");
+                        }
+                    });
+                    const hasValid = (activityData.budget || []).some(b =>
+                        (b.name || "").trim() && budgetPriceValid(b.unitPrice) && budgetQtyValid(b.quantity));
+                    if (!hasValid) push("budget.rows", "经费预算明细", "至少添加一项有效的预算明细（名称 + 单价 + 数量）");
+                    if (!(activityData.financePerson || "").trim()) push("budget.finance", "财务负责人", "填写审批栏财务负责人姓名");
+                    if (!(activityData.approvalActivityLeader || "").trim()) push("budget.approvalLeader", "活动负责人", "填写审批栏活动负责人姓名");
+                    if (!(activityData.approvalDate || "").trim()) push("budget.approvalDate", "审批时间", "填写审批日期");
+                    break;
+                }
+                case 2: // 审批流程 — 勾选「已通过审批」后即完成
+                    if (activityData.approved !== true) push("approve.checkbox", "已通过审批", "勾选「已通过审批」");
+                    break;
+                case 3: { // 采购清单 — 至少一项物资，且均已到货并填写放置位置
+                    const items = (activityData.purchaseList || []).filter(r => (r.name || "").trim());
+                    if (!items.length) {
+                        push("purchase.rows", "采购明细表", "至少添加一项物资");
+                    } else {
+                        (activityData.purchaseList || []).forEach((r, i) => {
+                            if (!(r.name || "").trim()) return;
+                            if (r.status !== "已到货") push(`purchase.status.${i}`, `第 ${i + 1} 项状态`, "标记为「已到货」");
+                            else if (!(r.location || "").trim()) push(`purchase.loc.${i}`, `第 ${i + 1} 项放置位置`, "填写物资放置位置");
+                        });
+                    }
+                    break;
+                }
+                case 4: // 活动资料上传 — 至少一张图片
+                    if (!(activityData.uploads || []).length) push("uploads.dropzone", "图片上传", "至少上传一张活动图片");
+                    break;
+            }
+            // 按页面位置排序，保证多处以页面顺序依次跳转
+            missing.sort((a, b) => a.el.getBoundingClientRect().top - b.el.getBoundingClientRect().top);
+            return missing;
+        }
+
+        /** 清除所有未完成高亮 */
+        function clearMissingHighlight() {
+            document.querySelectorAll(".field-missing").forEach(el => el.classList.remove("field-missing"));
+        }
+
+        /** 高亮 + 滚动定位到未填项（输入框自动聚焦） */
+        function focusMissing(target) {
+            target.el.classList.add("field-missing");
+            target.el.scrollIntoView({ behavior: "smooth", block: "center" });
+            const focusable = target.el.matches("input, textarea, select")
+                ? target.el
+                : target.el.querySelector("input, textarea, select");
+            if (focusable) focusable.focus({ preventScroll: true });
+        }
+
+        /** 显示/刷新悬浮导航按钮：文案「⏭ 下一处未填（第 x/N 处）」 */
+        function updateMissingNav(missing, current) {
+            const nav = document.getElementById("missingNav");
+            const count = document.getElementById("missingNavCount");
+            if (!nav || !count) return;
+            const pos = missing.indexOf(current) + 1;
+            count.textContent = `（第 ${pos}/${missing.length} 处）`;
+            nav.style.display = "block";
+        }
+
+        function hideMissingNav() {
+            const nav = document.getElementById("missingNav");
+            if (nav) nav.style.display = "none";
+        }
+
+        /** 校验失败：定位到第一处未填，并显示悬浮导航按钮 */
+        function jumpToMissing(index) {
+            const missing = getMissingFields(index);
+            if (!missing.length) {
+                showToast("⚠️ 请填写当前步骤的所有必填内容后再完成");
+                return;
+            }
+            clearMissingHighlight();
+            const target = missing[0];
+            missingCursor = { step: index, lastKey: target.key };
+            focusMissing(target);
+            updateMissingNav(missing, target);
+            showToast(`⚠️ 还有 ${missing.length} 处必填未完成：${target.label} — ${target.hint}`);
+        }
+
+        /** 悬浮按钮：从当前高亮处之后依次跳转到下一处未填（最后一处后循环回第一处） */
+        function jumpToNextMissing() {
+            if (missingCursor.step < 0) return;
+            const missing = getMissingFields(missingCursor.step);
+            if (!missing.length) {
+                hideMissingNav();
+                showToast("✅ 必填项已全部完成，点击「完成」继续");
+                return;
+            }
+            clearMissingHighlight();
+            let target = missing[0];
+            const fields = Array.from(document.querySelectorAll("#mainContent [data-field]"));
+            const lastPos = fields.findIndex(el => el.getAttribute("data-field") === missingCursor.lastKey);
+            if (lastPos >= 0) {
+                for (const m of missing) {
+                    if (fields.indexOf(m.el) > lastPos) { target = m; break; }
+                }
+            }
+            missingCursor = { step: missingCursor.step, lastKey: target.key };
+            focusMissing(target);
+            updateMissingNav(missing, target);
+            const pos = missing.indexOf(target) + 1;
+            showToast(`⚠️ 还有 ${missing.length} 处必填未完成（第 ${pos}/${missing.length} 处）：${target.label} — ${target.hint}`);
+        }
+
         function completeStep(index) {
             if (!isStepValid(index)) {
-                showToast("⚠️ 请填写当前步骤的所有必填内容后再完成");
+                jumpToMissing(index);
                 return;
             }
             if (!confirm(`确认完成「${steps[index].title}」？完成后该步骤内容将不可修改。`)) {
@@ -1677,6 +1858,9 @@
         }
 
         function renderAll() {
+            // 重渲染会清掉旧高亮，导航状态一并重置
+            hideMissingNav();
+            missingCursor = { step: -1, lastKey: "" };
             renderSidebar();
             const content = document.getElementById("mainContent");
             const done = completedSteps.has(currentStep);
@@ -1815,7 +1999,7 @@
                 <div style="display:flex;flex-direction:column;gap:14px;">
                     <div>
                         <label>活动名称 <span style="color:var(--danger);">*</span></label>
-                        <input class="input" placeholder="填写活动正式名称"
+                        <input class="input" data-field="plan.name" placeholder="填写活动正式名称"
                                value="${escQ(activityData.name)}"
                                oninput="activityData.name=this.value;updateHeaderTitle();">
                     </div>
@@ -1828,7 +2012,7 @@
                 <div style="display:flex;flex-direction:column;gap:14px;">
                     <div>
                         <label>核心主题 <span style="color:var(--danger);">*</span></label>
-                        <input class="input" placeholder="用一句话凝练活动主题，需具有吸引力且契合目的"
+                        <input class="input" data-field="plan.theme" placeholder="用一句话凝练活动主题，需具有吸引力且契合目的"
                                value="${escQ(p.theme)}"
                                oninput="activityData.planSections.theme=this.value">
                     </div>
@@ -1845,7 +2029,7 @@
             <div class="section-card">
                 <h3>三、目的</h3>
                 <label>核心目标 <span style="color:var(--danger);">*</span></label>
-                <textarea class="textarea" placeholder="明确本次活动希望达成的主要效果"
+                <textarea class="textarea" data-field="plan.objective" placeholder="明确本次活动希望达成的主要效果"
                           oninput="activityData.planSections.objective=this.value"
                           style="min-height:90px;">${escQ(p.objective)}</textarea>
             </div>
@@ -1856,7 +2040,7 @@
                 <div style="display:flex;flex-direction:column;gap:14px;">
                     <div>
                         <label>时间 <span style="color:var(--danger);">*</span></label>
-                        <input class="input" placeholder="YYYY年MM月DD日 HH:MM-HH:MM"
+                        <input class="input" data-field="plan.dateTime" placeholder="YYYY年MM月DD日 HH:MM-HH:MM"
                                value="${escQ(p.dateTime)}"
                                oninput="activityData.planSections.dateTime=this.value">
                     </div>
@@ -1868,7 +2052,7 @@
                     </div>
                     <div>
                         <label>预计地点 <span style="color:var(--danger);">*</span></label>
-                        <input class="input" placeholder="具体场地名称及编号，如「学生活动中心301室」"
+                        <input class="input" data-field="plan.location" placeholder="具体场地名称及编号，如「学生活动中心301室」"
                                value="${escQ(p.location)}"
                                oninput="activityData.planSections.location=this.value">
                     </div>
@@ -1991,7 +2175,7 @@
                 <div style="display:flex;flex-direction:column;gap:14px;">
                     <div>
                         <label>目标人数 <span style="color:var(--danger);">*</span></label>
-                        <input class="input" placeholder="XX人"
+                        <input class="input" data-field="plan.targetCount" placeholder="XX人"
                                value="${escQ(p.targetCount)}"
                                oninput="activityData.planSections.targetCount=this.value">
                     </div>
@@ -2011,7 +2195,7 @@
             </div>
 
             <!-- ═══ 六、活动执行方案 ═══ -->
-            <div class="section-card">
+            <div class="section-card" data-field="plan.executionPlan">
                 <h3>六、活动执行方案 <span style="color:var(--danger);">*</span></h3>
                 <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">
                     根据活动类型填写各环节安排，点击「时间节点」可通过时间轮盘选择开始与结束时间。表格形式为参考，可根据需要调整。
@@ -2168,7 +2352,7 @@
             </div>
 
             <!-- ═══ 九、应急预案 ═══ -->
-            <div class="section-card">
+            <div class="section-card" data-field="plan.emergencyPlan">
                 <h3>九、应急预案 <span style="color:var(--danger);">*</span></h3>
                 <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">
                     识别可能出现的突发情况，制定对应的应急处理方案。
@@ -2288,7 +2472,7 @@
                 <div style="display:flex;flex-direction:column;gap:14px;">
                     <div>
                         <label>学生组织名称 <span style="color:var(--danger);">*</span></label>
-                        <input class="input" placeholder="填写社团/组织全称"
+                        <input class="input" data-field="budget.org" placeholder="填写社团/组织全称"
                                value="${escQ(activityData.organizationName)}"
                                oninput="activityData.organizationName=this.value">
                     </div>
@@ -2304,7 +2488,7 @@
                     </div>
                     <div>
                         <label>活动负责人及联系方式 <span style="color:var(--danger);">*</span></label>
-                        <input class="input" placeholder="姓名 + 手机号/微信号"
+                        <input class="input" data-field="budget.leader" placeholder="姓名 + 手机号/微信号"
                                value="${escQ(activityData.activityLeader)}"
                                oninput="activityData.activityLeader=this.value">
                     </div>
@@ -2312,7 +2496,7 @@
             </div>
 
             <!-- ═══ 经费预算明细 ═══ -->
-            <div class="section-card">
+            <div class="section-card" data-field="budget.rows">
                 <h3>💵 经费预算明细 <span style="color:var(--danger);">*</span></h3>
                 <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">
                     逐项列出活动所需物品及其费用，总额自动计算。
@@ -2345,7 +2529,7 @@
                                            oninput="activityData.budget[${i}].name=this.value;updateBudgetRow(${i})">
                                 </td>
                                 <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
-                                    <input class="input${priceOk ? '' : ' input-error'}" style="width:100%;padding:6px 8px;font-size:12px;text-align:right;" placeholder="0" inputmode="decimal"
+                                    <input class="input${priceOk ? '' : ' input-error'}" data-field="budget.price.${i}" style="width:100%;padding:6px 8px;font-size:12px;text-align:right;" placeholder="0" inputmode="decimal"
                                            value="${r.unitPrice || ''}"
                                            oninput="budgetFieldInput(${i},'unitPrice',this)">
                                     ${priceOk ? '' : `<span id="budgetErr-unitPrice-${i}" style="display:block;font-size:11px;color:var(--danger);margin-top:3px;">单价需为不小于 0 的数字</span>`}
@@ -2356,7 +2540,7 @@
                                            oninput="activityData.budget[${i}].unit=this.value">
                                 </td>
                                 <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
-                                    <input class="input${qtyOk ? '' : ' input-error'}" style="width:100%;padding:6px 8px;font-size:12px;text-align:right;" placeholder="0" inputmode="numeric"
+                                    <input class="input${qtyOk ? '' : ' input-error'}" data-field="budget.qty.${i}" style="width:100%;padding:6px 8px;font-size:12px;text-align:right;" placeholder="0" inputmode="numeric"
                                            value="${r.quantity || ''}"
                                            oninput="budgetFieldInput(${i},'quantity',this)">
                                     ${qtyOk ? '' : `<span id="budgetErr-quantity-${i}" style="display:block;font-size:11px;color:var(--danger);margin-top:3px;">数量需为不小于 0 的整数</span>`}
@@ -2412,20 +2596,20 @@
                     <div style="display:flex;gap:12px;flex-wrap:wrap;">
                         <div style="flex:1;min-width:180px;">
                             <label><span style="color:var(--danger);">*</span> 财务负责人</label>
-                            <input class="input" placeholder="姓名"
+                            <input class="input" data-field="budget.finance" placeholder="姓名"
                                    value="${escQ(activityData.financePerson)}"
                                    oninput="activityData.financePerson=this.value">
                         </div>
                         <div style="flex:1;min-width:180px;">
                             <label><span style="color:var(--danger);">*</span> 活动负责人</label>
-                            <input class="input" placeholder="姓名"
+                            <input class="input" data-field="budget.approvalLeader" placeholder="姓名"
                                    value="${escQ(activityData.approvalActivityLeader || '')}"
                                    oninput="activityData.approvalActivityLeader=this.value">
                         </div>
                     </div>
                     <div>
                         <label><span style="color:var(--danger);">*</span> 时间</label>
-                        <input class="input" placeholder="YYYY年MM月DD日"
+                        <input class="input" data-field="budget.approvalDate" placeholder="YYYY年MM月DD日"
                                value="${escQ(activityData.approvalDate)}"
                                oninput="activityData.approvalDate=this.value">
                     </div>
@@ -2476,7 +2660,7 @@
                                oninput="activityData.type=this.value"></td></tr>
                     <tr><td style="padding:6px 0;color:var(--text-secondary);">策划方案 <span style="color:var(--danger);">*</span></td>
                         <td><label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;margin:0;">
-                            <input type="checkbox" ${activityData.approved ? 'checked' : ''}
+                            <input type="checkbox" data-field="approve.checkbox" ${activityData.approved ? 'checked' : ''}
                                    onchange="activityData.approved=this.checked"
                                    style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;">
                             <span>已通过审批</span>
@@ -2763,9 +2947,8 @@
             const btn = document.getElementById("confirmPurchaseBtn");
             if (!btn) return;
             const done = completedSteps.has(3);
-            const { allReady, label } = purchaseConfirmState(done);
+            const { label } = purchaseConfirmState(done);
             btn.textContent = label;
-            btn.disabled = !done && !allReady;
         }
 
         // 切换状态时原地更新：该行放置位置显隐 + 统计数字 + 确认按钮，不整页重渲染
@@ -2861,8 +3044,7 @@
             activityData.purchaseList.forEach(r => { if (statusCounts[r.status] !== undefined) statusCounts[r.status]++; });
             const totalItems = activityData.purchaseList.length;
 
-            const { label: confirmLabel, allReady } = purchaseConfirmState(done);
-            const confirmDisabled = !done && !allReady;
+            const { label: confirmLabel } = purchaseConfirmState(done);
 
             const escQ = (v) => esc(v || "");
 
@@ -2870,7 +3052,7 @@
             <h2>📦 采购清单</h2>
             <p class="subtitle">根据预算明细逐项采购，更新物资状态。首次打开时自动从预算案导入。</p>
 
-            <div class="section-card">
+            <div class="section-card" data-field="purchase.rows">
                 <h3>采购明细表</h3>
                 <div class="purchase-batch">
                     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
@@ -2906,13 +3088,13 @@
                                            oninput="activityData.purchaseList[${i}].name=this.value; updateConfirmButton()">
                                 </td>
                                 <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
-                                    <select id="purchaseStatus-${i}" style="font-size:12px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);width:100%;"
+                                    <select id="purchaseStatus-${i}" data-field="purchase.status.${i}" style="font-size:12px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);width:100%;"
                                             onchange="onPurchaseStatusChange(${i}, this)">
                                         <option value="待采购" ${r.status === '待采购' ? 'selected' : ''}>待采购</option>
                                         <option value="已下单" ${r.status === '已下单' ? 'selected' : ''}>已下单</option>
                                         <option value="已到货" ${r.status === '已到货' ? 'selected' : ''}>已到货</option>
                                     </select>
-                                    <input id="purchaseLoc-${i}" class="input" style="width:100%;padding:4px 6px;font-size:11px;margin-top:4px;${r.status === '已到货' ? '' : 'display:none;'}" placeholder="放置位置"
+                                    <input id="purchaseLoc-${i}" data-field="purchase.loc.${i}" class="input" style="width:100%;padding:4px 6px;font-size:11px;margin-top:4px;${r.status === '已到货' ? '' : 'display:none;'}" placeholder="放置位置"
                                            value="${escQ(r.location)}"
                                            oninput="activityData.purchaseList[${i}].location=this.value; updateConfirmButton()">
                                 </td>
@@ -2940,7 +3122,7 @@
 
             <div class="btn-group">
                 <button class="btn btn-outline" onclick="prevStep()">← 上一步</button>
-                <button id="confirmPurchaseBtn" class="btn btn-primary btn-lg" onclick="completeStep(3)" ${confirmDisabled ? 'disabled' : ''}>
+                <button id="confirmPurchaseBtn" class="btn btn-primary btn-lg" onclick="completeStep(3)">
                     ${confirmLabel}
                 </button>
             </div>`;
@@ -2958,7 +3140,7 @@
 
             <div class="section-card">
                 <h3>图片上传窗口</h3>
-                <div class="upload-dropzone" id="uploadDropzone"
+                <div class="upload-dropzone" id="uploadDropzone" data-field="uploads.dropzone"
                      onclick="document.getElementById('fileInput').click()"
                      ondragover="event.preventDefault();this.classList.add('dragover')"
                      ondragleave="this.classList.remove('dragover')"
@@ -4404,6 +4586,25 @@
 
         init();
         renderAll();
+
+        // ── 未完成定位：用户开始填写后自动清除该处高亮，并同步悬浮按钮计数 ──
+        ["input", "change"].forEach(evt =>
+            document.getElementById("mainContent").addEventListener(evt, (e) => {
+                const t = e.target;
+                if (t && t.classList && t.classList.contains("field-missing")) t.classList.remove("field-missing");
+                const nav = document.getElementById("missingNav");
+                if (nav && nav.style.display !== "none" && missingCursor.step >= 0) {
+                    const missing = getMissingFields(missingCursor.step);
+                    if (!missing.length) {
+                        hideMissingNav();
+                    } else {
+                        const current = missing.find(m => m.key === missingCursor.lastKey) || missing[0];
+                        missingCursor.lastKey = current.key;
+                        updateMissingNav(missing, current);
+                    }
+                }
+            })
+        );
 
         // 嵌入模式（资料库侧栏「AI 活动策划助手」入口）：直接打开 AI 助手主界面
         if (new URLSearchParams(window.location.search).get("embed") === "archive-planner") {
