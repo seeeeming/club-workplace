@@ -1141,6 +1141,7 @@
             padding: 0 3px; border-radius: 4px; line-height: 1.4;
         }
         .tw-chip-x:hover { color: var(--danger); background: #fef2f2; }
+        .tw-chip-dur { font-size: 11px; color: var(--primary); font-variant-numeric: tabular-nums; font-weight: 600; }
 
         .tw-overlay {
             position: fixed; inset: 0; z-index: 1000;
@@ -1161,6 +1162,27 @@
         }
         .tw-sub { font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; }
 
+        /* ✍ 手动填写：轮盘之外的直接输入选项 */
+        .tw-manual {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 12px; padding: 8px 10px;
+            border: 1px dashed var(--border); border-radius: 10px;
+            background: rgba(74,108,247,0.05);
+        }
+        .tw-manual-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
+        .tw-manual-fields { display: flex; gap: 8px; flex: 1; }
+        .tw-manual-field {
+            display: flex; align-items: center; gap: 4px; flex: 1;
+            font-size: 11px; color: var(--text-tertiary); white-space: nowrap;
+        }
+        .tw-manual-input {
+            width: 100%; min-width: 0; padding: 5px 4px;
+            border: 1px solid var(--border); border-radius: 8px;
+            font-size: 13px; font-weight: 600; text-align: center;
+            font-variant-numeric: tabular-nums; font-family: inherit; background: var(--card-bg);
+        }
+        .tw-manual-input:focus { border-color: var(--primary); outline: none; }
+
         .tw-modes { display: flex; gap: 8px; margin-bottom: 14px; }
         .tw-mode-btn {
             flex: 1; padding: 8px 10px; border-radius: 10px;
@@ -1171,9 +1193,25 @@
         }
         .tw-mode-btn .tw-mode-label { font-size: 11px; color: var(--text-secondary); }
         .tw-mode-btn .tw-mode-val { font-weight: 600; font-variant-numeric: tabular-nums; font-size: 14px; }
-        .tw-mode-btn.active { border-color: var(--primary); background: var(--primary-light); }
-        .tw-mode-btn.active .tw-mode-label { color: var(--primary); }
-        .tw-mode-btn.active .tw-mode-val { color: var(--primary); }
+        .tw-mode-btn.mode-start.active { border-color: #10b981; background: #ecfdf5; }
+        .tw-mode-btn.mode-start.active .tw-mode-label { color: #059669; }
+        .tw-mode-btn.mode-start.active .tw-mode-val { color: #059669; }
+        .tw-mode-btn.mode-end.active { border-color: #ef4444; background: #fef2f2; }
+        .tw-mode-btn.mode-end.active .tw-mode-label { color: #dc2626; }
+        .tw-mode-btn.mode-end.active .tw-mode-val { color: #dc2626; }
+
+        .tw-duration {
+            text-align: center; font-size: 13px; font-weight: 600;
+            color: var(--text); margin-bottom: 10px; font-variant-numeric: tabular-nums;
+        }
+        .tw-duration.warn { color: var(--danger); }
+        .tw-quick { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 12px; }
+        .tw-quick-btn {
+            padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border);
+            background: var(--card-bg); color: var(--text-secondary); font-size: 12px;
+            cursor: pointer; font-family: inherit; transition: var(--transition);
+        }
+        .tw-quick-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
 
         .tw-dial-wrap { position: relative; width: 280px; height: 280px; margin: 0 auto 10px; }
         .tw-dial { width: 100%; height: 100%; display: block; touch-action: none; user-select: none; cursor: pointer; }
@@ -1182,7 +1220,22 @@
             transform: translate(-50%, -50%);
             text-align: center; pointer-events: none;
         }
-        .tw-dial-time { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; color: var(--text); }
+        .tw-dial-time-input {
+            width: 108px; font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums;
+            text-align: center; line-height: 1.15; color: var(--text);
+            border: 1px dashed transparent; border-radius: 10px; background: transparent;
+            padding: 2px 4px; font-family: inherit; pointer-events: auto; outline: none;
+        }
+        .tw-dial-time-input:hover { border-color: var(--border); }
+        .tw-dial-time-input:focus { border-color: var(--primary); background: #fff; }
+        .tw-nudge { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; pointer-events: auto; }
+        .tw-day-chip { font-size: 11px; font-weight: 700; color: #b45309; background: #fef3c7; border-radius: 999px; padding: 2px 8px; }
+        .tw-nudge-btn {
+            border: 1px solid var(--border); background: var(--card-bg); cursor: pointer;
+            font-size: 11px; font-weight: 600; padding: 2px 9px; color: var(--text-secondary);
+            border-radius: 999px; font-family: inherit;
+        }
+        .tw-nudge-btn:hover { border-color: var(--primary); color: var(--primary); }
         .tw-dial-ampm {
             display: inline-flex; margin-top: 4px;
             border: 1px solid var(--border); border-radius: 999px; overflow: hidden;
@@ -2217,7 +2270,7 @@
                                 <td style="padding:6px 10px;border-bottom:1px solid var(--border);">
                                     <button type="button" class="tw-chip" onclick="openTimeWheel(${i})" title="点击打开时间轮盘">
                                         ${(r.time || "").trim()
-                                            ? `<span class="tw-chip-val">${escQ(r.time)}</span><span class="tw-chip-x" title="清除时间" onclick="event.stopPropagation();twClearRow(${i});">✕</span>`
+                                            ? `<span class="tw-chip-val">${escQ(r.time)}</span>${(() => { const pr = parseTwRange(r.time); return pr && pr.end > pr.start ? `<span class="tw-chip-dur">· ${twDur(pr.end - pr.start)}</span>` : ''; })()}<span class="tw-chip-x" title="清除时间" onclick="event.stopPropagation();twClearRow(${i});">✕</span>`
                                             : `<span class="tw-chip-empty">⏱ 点击选择</span>`}
                                     </button>
                                 </td>
@@ -3311,18 +3364,46 @@
         // 时间轮盘：活动执行方案「时间节点」选择器
         // 存储格式保持 "HH:MM-HH:MM" 字符串，与导出/预览/解析逻辑兼容
         // ═══════════════════════════════════════════════
-        let twState = null; // { index, start, end(分钟), mode, lastMinInHalf }
+        let twState = null; // { index, start, end(分钟), mode, lastMinInHalf, dragStartRaw, dragStartVal }
 
         const twFmt = (m) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+
+        /** 分钟 → 「1小时30分」/「45分钟」 */
+        function twDur(m) {
+            m = Math.round(m);
+            if (m < 60) return `${m}分钟`;
+            const h = Math.floor(m / 60), mm = m % 60;
+            return mm ? `${h}小时${mm}分` : `${h}小时`;
+        }
+
+        /** 表盘角度（分钟，12 点方向为 0°）→ 圆上坐标 */
+        function twPolar(min, r) {
+            const rad = (min * 0.5 - 90) * Math.PI / 180;
+            return [140 + r * Math.cos(rad), 140 + r * Math.sin(rad)];
+        }
+
+        /** 区间弧带 path：开始 → 结束（顺时针，超过 12 小时用大弧） */
+        function twArcPath(start, end) {
+            const [x1, y1] = twPolar(start % 720, 127);
+            const [x2, y2] = twPolar(end % 720, 127);
+            const large = (end - start) > 360 ? 1 : 0;
+            return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A 127 127 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+        }
+
+        /** 720 分钟圆环上的最短距离 */
+        const twCircDist = (a, b) => { const d = Math.abs(a - b) % 720; return Math.min(d, 720 - d); };
 
         function parseTwRange(s) {
             const range = String(s || "").match(/(\d{1,2})[:：](\d{1,2})\s*[-–—~～至]\s*(\d{1,2})[:：](\d{1,2})/);
             if (range) {
-                return { start: (+range[1] * 60 + +range[2]) % 1440, end: (+range[3] * 60 + +range[4]) % 1440 };
+                const start = +range[1] * 60 + +range[2];
+                let end = +range[3] * 60 + +range[4];
+                if (end < start) end += 1440; // 跨天（如 23:30-01:00）按次日计算
+                return { start, end }; // 支持超过 24 小时（如 26:30）
             }
             const single = String(s || "").match(/(\d{1,2})[:：](\d{1,2})/);
             if (single) {
-                const t = (+single[1] * 60 + +single[2]) % 1440;
+                const t = +single[1] * 60 + +single[2];
                 return { start: t, end: t };
             }
             return null;
@@ -3339,7 +3420,7 @@
             if (!row) return;
             let start = 840, end = 870; // 默认 14:00-14:30
             const parsed = parseTwRange(row.time);
-            if (parsed) { start = parsed.start; end = parsed.end === parsed.start ? ((parsed.start + 30) % 1440) : parsed.end; }
+            if (parsed) { start = parsed.start; end = parsed.end === parsed.start ? parsed.start + 30 : parsed.end; }
             twState = { index, start, end, mode: "start", lastMinInHalf: null };
 
             const overlay = document.createElement("div");
@@ -3347,19 +3428,46 @@
             overlay.innerHTML = `
             <div class="tw-popup">
                 <div class="tw-title">🕐 时间轮盘 <span style="font-size:12px;color:var(--text-secondary);font-weight:400;">第 ${index + 1} 行 · ${esc((row.name || "").trim() ? row.name : "未命名环节")}</span></div>
-                <p class="tw-sub">旋转指针选择开始与结束时间，精确到 5 分钟</p>
+                <p class="tw-sub">直接拖拽<span style="color:#059669;font-weight:600;">绿色（开始）</span>/<span style="color:#dc2626;font-weight:600;">红色（结束）</span>指针：靠近<span style="font-weight:600;">整十分</span>（:00/:10/:20…）自动吸附，<span style="font-weight:600;">单击落点</span>精确到 5 分钟；也可在上方<span style="font-weight:600;">✍ 手动填写</span>或<span style="font-weight:600;">点击表盘中心时间</span>直接输入（支持超过 24 小时，如 26:30），或 −1分/+1分 微调</p>
+                <div class="tw-manual">
+                    <span class="tw-manual-label">✍ 手动填写</span>
+                    <div class="tw-manual-fields">
+                        <label class="tw-manual-field">开始<input class="tw-manual-input" id="twInputStart" placeholder="14:00" maxlength="5" inputmode="numeric" autocomplete="off" spellcheck="false"
+                               title="开始时间，支持超过 24 小时（如 26:30），回车或点击别处生效"
+                               onchange="twManualTime('start', this.value)" onkeydown="if(event.key==='Enter')this.blur()"></label>
+                        <label class="tw-manual-field">结束<input class="tw-manual-input" id="twInputEnd" placeholder="15:30" maxlength="5" inputmode="numeric" autocomplete="off" spellcheck="false"
+                               title="结束时间，支持超过 24 小时（如 26:30），回车或点击别处生效"
+                               onchange="twManualTime('end', this.value)" onkeydown="if(event.key==='Enter')this.blur()"></label>
+                    </div>
+                </div>
                 <div class="tw-modes">
-                    <button type="button" class="tw-mode-btn" id="twModeStart" onclick="twSetMode('start')">
-                        <span class="tw-mode-label">开始时间</span><span class="tw-mode-val" id="twValStart"></span>
+                    <button type="button" class="tw-mode-btn mode-start" id="twModeStart" onclick="twSetMode('start')">
+                        <span class="tw-mode-label">● 开始时间</span><span class="tw-mode-val" id="twValStart"></span>
                     </button>
-                    <button type="button" class="tw-mode-btn" id="twModeEnd" onclick="twSetMode('end')">
-                        <span class="tw-mode-label">结束时间</span><span class="tw-mode-val" id="twValEnd"></span>
+                    <button type="button" class="tw-mode-btn mode-end" id="twModeEnd" onclick="twSetMode('end')">
+                        <span class="tw-mode-label">● 结束时间</span><span class="tw-mode-val" id="twValEnd"></span>
                     </button>
+                </div>
+                <div class="tw-duration" id="twDuration">⏱ 时长 --</div>
+                <div class="tw-quick">
+                    <button type="button" class="tw-quick-btn" onclick="twSetQuickDur(15)">15分钟</button>
+                    <button type="button" class="tw-quick-btn" onclick="twSetQuickDur(30)">30分钟</button>
+                    <button type="button" class="tw-quick-btn" onclick="twSetQuickDur(45)">45分钟</button>
+                    <button type="button" class="tw-quick-btn" onclick="twSetQuickDur(60)">1小时</button>
+                    <button type="button" class="tw-quick-btn" onclick="twSetQuickDur(90)">1.5小时</button>
+                    <button type="button" class="tw-quick-btn" onclick="twSetQuickDur(120)">2小时</button>
                 </div>
                 <div class="tw-dial-wrap">
                     ${buildTwDialSvg()}
                     <div class="tw-dial-center">
-                        <div class="tw-dial-time" id="twDialTime">--:--</div>
+                        <input class="tw-dial-time-input" id="twDialTime" value="--:--" placeholder="--:--" maxlength="5" inputmode="numeric" autocomplete="off" spellcheck="false"
+                               title="点击输入时间，支持超过 24 小时（如 26:30），回车或点击别处生效"
+                               onchange="twInputTime(this.value)" onkeydown="if(event.key==='Enter')this.blur()">
+                        <div class="tw-nudge">
+                            <button type="button" class="tw-nudge-btn" onclick="twNudge(-1)" title="减 1 分钟">−1分</button>
+                            <span class="tw-day-chip" id="twDayChip" style="display:none;"></span>
+                            <button type="button" class="tw-nudge-btn" onclick="twNudge(1)" title="加 1 分钟">+1分</button>
+                        </div>
                         <div class="tw-dial-ampm">
                             <button type="button" class="tw-ampm-btn" id="twAm" onclick="twSetAmpm(0)">上午</button>
                             <button type="button" class="tw-ampm-btn" id="twPm" onclick="twSetAmpm(1)">下午</button>
@@ -3403,9 +3511,14 @@
                 <circle cx="140" cy="140" r="127" fill="none" stroke="#eef0f5" stroke-width="1"/>
                 ${ticks}
                 ${nums}
-                <g id="twDialHand" transform="rotate(0 140 140)">
-                    <line x1="140" y1="146" x2="140" y2="58" stroke="#4a6cf7" stroke-width="4" stroke-linecap="round"/>
-                    <line x1="140" y1="142" x2="140" y2="120" stroke="#4a6cf7" stroke-width="9" stroke-linecap="round"/>
+                <path id="twDialArc" d="" fill="none" stroke="rgba(74,108,247,0.22)" stroke-width="14" stroke-linecap="round"/>
+                <g id="twDialHandStart" transform="rotate(0 140 140)">
+                    <line x1="140" y1="146" x2="140" y2="62" stroke="#10b981" stroke-width="4" stroke-linecap="round"/>
+                    <line x1="140" y1="142" x2="140" y2="120" stroke="#10b981" stroke-width="9" stroke-linecap="round"/>
+                </g>
+                <g id="twDialHandEnd" transform="rotate(30 140 140)">
+                    <line x1="140" y1="146" x2="140" y2="62" stroke="#ef4444" stroke-width="4" stroke-linecap="round"/>
+                    <line x1="140" y1="142" x2="140" y2="120" stroke="#ef4444" stroke-width="9" stroke-linecap="round"/>
                 </g>
                 <circle cx="140" cy="140" r="10" fill="#4a6cf7"/>
                 <circle cx="140" cy="140" r="4" fill="#fff"/>
@@ -3419,6 +3532,11 @@
             svg.addEventListener("pointerdown", (e) => {
                 dragging = true;
                 twState.lastMinInHalf = null;
+                // 就近抓取：点击角度更接近哪根指针，就编辑哪根
+                const rect = svg.getBoundingClientRect();
+                const clickMin = twAngleToMin(e.clientX, e.clientY, rect);
+                twState.mode = twCircDist(clickMin, twState.start % 720) <= twCircDist(clickMin, twState.end % 720)
+                    ? "start" : "end";
                 svg.setPointerCapture(e.pointerId);
                 twApplyDrag(e);
             });
@@ -3429,20 +3547,27 @@
         function twApplyDrag(e) {
             const svg = document.getElementById("twDialSvg");
             const rect = svg.getBoundingClientRect();
-            const minInHalf = twAngleToMin(e.clientX, e.clientY, rect);
+            const minInHalf = twAngleToMinRaw(e.clientX, e.clientY, rect);
             const cur = twCur();
             let abs;
             if (twState.lastMinInHalf == null) {
-                // 单击/首次落点：直接按当前上下午基准定位
-                abs = Math.floor(cur / 720) * 720 + minInHalf;
+                // 单击/首次落点：精确到 5 分钟刻度（保留非整数选项）
+                abs = Math.floor(cur / 720) * 720 + (Math.round(minInHalf / 5) * 5) % 720;
+                // 记录拖拽起点：后续按累计位移计算，慢速拖拽也跟手
+                twState.dragStartRaw = minInHalf;
+                twState.dragStartVal = abs;
             } else {
-                // 拖拽：按角度增量累计，跨 12 点时自动翻转上下午
-                let delta = (minInHalf - twState.lastMinInHalf + 720) % 720;
+                // 拖拽：从落点累计总位移，跨 12 点时自动翻转上下午
+                let delta = (minInHalf - twState.dragStartRaw + 720) % 720;
                 if (delta > 360) delta -= 720;
-                abs = cur + delta;
+                const absRaw = twState.dragStartVal + delta;
+                // 磁性吸附：靠近整十分刻度（±2.5 分钟）吸到整十；其余按 5 分钟跟随
+                const m = ((absRaw % 60) + 60) % 60;
+                const tens = Math.round(m / 10) * 10;
+                abs = Math.abs(m - tens) <= 2.5 ? absRaw + (tens - m) : Math.round(absRaw / 5) * 5;
             }
             twState.lastMinInHalf = minInHalf;
-            twSetCur(((abs % 1440) + 1440) % 1440);
+            twSetCur(Math.min(5999, Math.max(0, abs))); // 支持超过 24 小时（如 26:30）
             renderTwDial();
         }
 
@@ -3451,6 +3576,14 @@
             let deg = Math.atan2(y - cy, x - cx) * 180 / Math.PI + 90; // 12 点方向为 0°
             deg = (deg + 360) % 360;
             return Math.round(deg / 360 * 720) % 720; // 吸附到 5 分钟
+        }
+
+        /** 未吸附的原始角度分钟（0-720，浮点），供拖拽磁性吸附使用 */
+        function twAngleToMinRaw(x, y, rect) {
+            const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+            let deg = Math.atan2(y - cy, x - cx) * 180 / Math.PI + 90;
+            deg = (deg + 360) % 360;
+            return deg / 360 * 720;
         }
 
         const twCur = () => twState.mode === "start" ? twState.start : twState.end;
@@ -3462,10 +3595,64 @@
             renderTwDial();
         }
 
+        /** 快捷时长：结束 = 开始 + 时长（封顶 23:55），并切到结束指针方便微调 */
+        function twSetQuickDur(mins) {
+            if (!twState) return;
+            let end = twState.start + mins;
+            if (end > 5999) {
+                end = 5999;
+                showToast("结束时间已设置到最晚 99:59");
+            }
+            twState.end = end;
+            twState.mode = "end";
+            twState.lastMinInHalf = null;
+            renderTwDial();
+        }
+
         function twSetAmpm(base) {
             const cur = twCur();
-            if (Math.floor(cur / 720) === base) return;
-            twSetCur((base * 720 + cur % 720) % 1440);
+            if (Math.floor(cur / 720) % 2 === base) return;
+            // 保留天数（支持超过 24 小时），只切换上午/下午
+            twSetCur(Math.floor(cur / 1440) * 1440 + base * 720 + cur % 720);
+            twState.lastMinInHalf = null;
+            renderTwDial();
+        }
+
+        /** 微调当前指针 ±1 分钟，精确选到 5:46 这类任意分钟（支持超过 24 小时） */
+        function twNudge(d) {
+            if (!twState) return;
+            twSetCur(Math.min(5999, Math.max(0, twCur() + d)));
+            twState.lastMinInHalf = null;
+            renderTwDial();
+        }
+
+        /** 解析手动输入 HH:MM（小时可为 26 这类超过 24 的值）；非法返回 null */
+        function twParseInput(v) {
+            const m = /^(\d{1,2})[:：](\d{1,2})$/.exec(String(v || "").trim());
+            if (!m || +m[2] > 59) return null;
+            return Math.min(5999, (+m[1]) * 60 + (+m[2]));
+        }
+
+        /** 表盘中心时间手动输入：作用于当前编辑指针（回车或失焦生效） */
+        function twInputTime(v) {
+            if (!twState) return;
+            let val = twParseInput(v);
+            if (val == null) { renderTwDial(); return; } // 非法输入：恢复当前时间
+            if (twState.mode === "end") { while (val < twState.start) val += 1440; } // 跨天按次日计算
+            twSetCur(val);
+            twState.lastMinInHalf = null;
+            renderTwDial();
+        }
+
+        /** ✍ 手动填写：直接填开始/结束时间，轮盘双指针同步跟随 */
+        function twManualTime(which, v) {
+            if (!twState) return;
+            let val = twParseInput(v);
+            if (val == null) { renderTwDial(); return; } // 非法输入：恢复原值
+            if (which === "end") { while (val < twState.start) val += 1440; } // 跨天按次日计算
+            if (which === "start") twState.start = val; else twState.end = val;
+            twState.mode = which;
+            twState.lastMinInHalf = null;
             renderTwDial();
         }
 
@@ -3473,19 +3660,46 @@
             if (!twState) return;
             const cur = twCur();
             const base = Math.floor(cur / 720);
-            const hand = document.getElementById("twDialHand");
-            if (hand) hand.setAttribute("transform", `rotate(${(cur % 720 * 0.5).toFixed(1)} 140 140)`);
+            // 双指针：绿=开始，红=结束，中间弧带显示区间
+            const handStart = document.getElementById("twDialHandStart");
+            if (handStart) handStart.setAttribute("transform", `rotate(${(twState.start % 720 * 0.5).toFixed(1)} 140 140)`);
+            const handEnd = document.getElementById("twDialHandEnd");
+            if (handEnd) handEnd.setAttribute("transform", `rotate(${(twState.end % 720 * 0.5).toFixed(1)} 140 140)`);
+            const arc = document.getElementById("twDialArc");
+            if (arc) arc.setAttribute("d", twState.end > twState.start ? twArcPath(twState.start, twState.end) : "");
             const t = document.getElementById("twDialTime");
-            if (t) t.textContent = twFmt(cur);
+            if (t && document.activeElement !== t) t.value = twFmt(cur);
+            // ✍ 手动填写两个输入框与当前开始/结束同步（输入中不覆盖）
+            const ms2 = document.getElementById("twInputStart");
+            if (ms2 && document.activeElement !== ms2) ms2.value = twFmt(twState.start);
+            const me2 = document.getElementById("twInputEnd");
+            if (me2 && document.activeElement !== me2) me2.value = twFmt(twState.end);
             const am = document.getElementById("twAm"), pm = document.getElementById("twPm");
-            if (am) am.classList.toggle("active", base === 0);
-            if (pm) pm.classList.toggle("active", base === 1);
+            const isPm = base % 2 === 1;
+            if (am) am.classList.toggle("active", !isPm);
+            if (pm) pm.classList.toggle("active", isPm);
+            const dc = document.getElementById("twDayChip");
+            if (dc) {
+                const day = Math.floor(cur / 1440);
+                dc.style.display = day >= 1 ? "" : "none";
+                if (day >= 1) dc.textContent = `第${day + 1}天`;
+            }
             const vs = document.getElementById("twValStart"), ve = document.getElementById("twValEnd");
             if (vs) vs.textContent = twFmt(twState.start);
             if (ve) ve.textContent = twFmt(twState.end);
             const ms = document.getElementById("twModeStart"), me = document.getElementById("twModeEnd");
             if (ms) ms.classList.toggle("active", twState.mode === "start");
             if (me) me.classList.toggle("active", twState.mode === "end");
+            const dur = document.getElementById("twDuration");
+            if (dur) {
+                if (twState.end > twState.start) {
+                    dur.textContent = `⏱ 时长 ${twDur(twState.end - twState.start)}`;
+                    dur.classList.remove("warn");
+                } else {
+                    dur.textContent = "⚠️ 结束时间需晚于开始时间";
+                    dur.classList.add("warn");
+                }
+            }
         }
 
         function twConfirm() {
@@ -3515,7 +3729,12 @@
             document.removeEventListener("keydown", twOnKey);
         }
 
-        function twOnKey(e) { if (e.key === "Escape") twClose(); }
+        function twOnKey(e) {
+            if (e.key !== "Escape") return;
+            const ae = document.activeElement;
+            if (ae && ["twDialTime", "twInputStart", "twInputEnd"].includes(ae.id)) ae.blur(); // 输入中：退出输入并生效/还原
+            else twClose();
+        }
 
         // ═══════════════════════════════════════════════
         // 场地预定申请表：场地实景/规划图插入图片
